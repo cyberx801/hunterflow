@@ -66,6 +66,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         factory = build_session_factory(engine)
         app.state.engine = engine
         app.state.session_factory = factory
+        if settings.env != "test":
+            from .jobs.broker import setup_broker
+
+            setup_broker(settings)
         _create_bootstrap_user(settings, factory)
         yield
         engine.dispose()

@@ -19,6 +19,7 @@ Run: uvicorn demo.app:app --host 0.0.0.0 --port 8080
 from __future__ import annotations
 
 from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
 app = FastAPI(title="HunterFlow Demo Target (synthetic, intentionally flawed)", version="0.1.0")
@@ -55,9 +56,24 @@ def current_user(authorization: str | None = Header(default=None)) -> dict:
     return USERS[username]
 
 
-@app.get("/")
+@app.get("/", response_class=HTMLResponse)
 def index():
-    return {"app": "hunterflow-demo", "note": "synthetic demo target for local testing only"}
+    # Simple HTML so a crawler has something to follow in the local demo.
+    return """<!doctype html>
+<html><head><title>HunterFlow demo target</title></head>
+<body>
+  <h1>HunterFlow demo target</h1>
+  <p>Synthetic, intentionally inconsistent app for local testing only.</p>
+  <ul>
+    <li><a href="/api/v1/version">version</a></li>
+    <li><a href="/api/users/me">me</a></li>
+    <li><a href="/api/orders">orders</a></li>
+    <li><a href="/api/orders/1">order 1</a></li>
+    <li><a href="/api/orders/2">order 2</a></li>
+    <li><a href="/api/admin/stats">admin stats</a></li>
+    <li><a href="/docs">docs</a></li>
+  </ul>
+</body></html>"""
 
 
 @app.get("/healthz")

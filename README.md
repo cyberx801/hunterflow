@@ -118,6 +118,7 @@ Captured from the running application.
 | ![Overview](docs/screenshots/overview.png) | ![Scope](docs/screenshots/scope.png) |
 | ![Research](docs/screenshots/research.png) | ![Traffic](docs/screenshots/traffic.png) |
 | ![Findings](docs/screenshots/findings.png) | ![Monitoring](docs/screenshots/monitoring.png) |
+| ![Monitoring changes](docs/screenshots/monitoring-changes.png) | ![First-run account](docs/screenshots/first-run-account.png) |
 
 More in `docs/screenshots/` (programs, endpoints, recon, first-run account).
 
@@ -175,10 +176,15 @@ More detail in [`docs/development.md`](docs/development.md) and
 ## Tests
 
 ```
-backend: 133 passed (unit, integration, security)
+backend: 148 passed (unit, integration, security)
 e2e:     6 passed (Playwright, critical journeys)
 lint:    ruff clean, tsc clean
 ```
+
+The stack was also exercised end to end with Docker Compose (PostgreSQL, Redis, worker,
+scheduler, synthetic demo target): a real `web_inventory` scan ran subfinder, httpx and
+katana against `demo.local`, produced assets and endpoints, recorded change events, and a
+schedule fired automatically from the scheduler.
 
 The security suite attacks the real controls: scope bypasses, host tricks, CSRF, injection,
 redaction, and evidence isolation. See [`specs/testing-strategy.md`](specs/testing-strategy.md).
@@ -195,10 +201,10 @@ redaction, and evidence isolation. See [`specs/testing-strategy.md`](specs/testi
 ## Limitations
 
 - Single user, no teams or roles yet.
-- The Docker toolchain image has not been exercised end to end on every platform; the
-  binaries are pinned with checksums in `backend/integrations/tools.lock`.
+- Removal detection is heuristic (two consecutive misses); treat "removed" as a prompt to
+  re-check, not as fact.
 - No continuous proxy capture, no PDF export, no AI features.
-- These are deliberate boundaries, listed in [`docs/known-issues.md`](docs/known-issues.md).
+- See [`docs/known-issues.md`](docs/known-issues.md) for the current list.
 
 ## Roadmap
 

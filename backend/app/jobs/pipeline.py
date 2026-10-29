@@ -327,13 +327,18 @@ def _build_context(tool_name: str, targets: list[str], policy: Policy, options: 
 
 
 def _scope_regexes(policy: Policy):
+    """URL patterns for katana's -cs/-cos (they match full URLs, not hostnames)."""
+    import re
+
     allow, deny = [], []
     for rule in policy.rules:
-        if rule.kind.value == "domain_wildcard":
-            base = rule.value[2:]
-            pattern = r"(^|\.)" + base.replace(".", r"\.") + r"$"
-            (allow if rule.effect.value == "allow" else deny).append(pattern)
-        elif rule.kind.value == "domain_exact":
-            pattern = r"^" + rule.value.replace(".", r"\.") + r"$"
-            (allow if rule.effect.value == "allow" else deny).append(pattern)
+        if rule.kind.value == "domain_exact":
+            host = re.escape(rule.value)
+            pattern = rf"(?i)^https?://{host}(:[0-9]+)?(/|$)"
+        elif rule.kind.value == "domain_wildcard" and rule.value.startswith("*."):
+            base = re.escape(rule.value[2:])
+            pattern = rf"(?i)^https?://([a-z0-9-]+\.)+{base}(:[0-9]+)?(/|$)"
+        else:
+            continue
+        (allow if rule.effect.value == "allow" else deny).append(pattern)
     return allow, deny

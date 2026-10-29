@@ -9,7 +9,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 RUN apt-get update && apt-get install -y --no-install-recommends curl unzip ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=ghcr.io/astral-sh/uv:0.5 /uv /uvx /bin/
+# uv is installed from PyPI (keeps the build independent of ghcr.io availability).
+RUN pip install --no-cache-dir "uv==0.13.3"
 
 # --- Tool stage: pinned ProjectDiscovery binaries with recorded checksums ---
 FROM base AS tools

@@ -86,8 +86,8 @@ class HttpxAdapter:
             "-title",
             "-tech-detect",
         ]
-        # Redirects are NOT followed: out-of-scope redirect following is prohibited.
-        args += ["-follow-redirects", "false"] if ctx.extra.get("no_follow_redirects", True) else []
+        # httpx does not follow redirects unless -follow-redirects is passed;
+        # out-of-scope redirect following is prohibited, so we never enable it.
         if ctx.rate_limit:
             args += ["-rl", str(ctx.rate_limit)]
         for target in ctx.targets:
@@ -136,7 +136,7 @@ class KatanaAdapter:
         if ctx.rate_limit:
             args += ["-rl", str(ctx.rate_limit)]
         if ctx.extra.get("no_follow_redirects", True):
-            args.append("-no-follow")
+            args.append("-disable-redirects")
         # Scope enforcement inside katana: in-scope regexes derived from policy.
         in_scope = ctx.extra.get("in_scope_regexes") or []
         out_scope = ctx.extra.get("out_of_scope_regexes") or []
@@ -145,7 +145,7 @@ class KatanaAdapter:
         if out_scope:
             args += ["-cos", "|".join(out_scope)]
         for target in ctx.targets:
-            args.append(target)
+            args += ["-u", target]
         return args
 
     def parse(self, stdout: bytes, ctx: StepContext) -> Iterable[Observation]:
@@ -189,9 +189,7 @@ class NucleiAdapter:
         return info
 
     def build_args(self, ctx: StepContext, binary: str) -> list[str]:
-        args = [binary, "-silent", "-jsonl", "-no-color", "-no-mhe"]
-        if ctx.extra.get("no_follow_redirects", True):
-            args += ["-fr", "false"] if ctx.extra.get("use_fr_flag", True) else []
+        args = [binary, "-silent", "-jsonl", "-no-color", "-dr"]
         if ctx.extra.get("no_interactsh", True):
             args.append("-no-interactsh")
         if ctx.rate_limit:
@@ -200,7 +198,7 @@ class NucleiAdapter:
         if templates:
             args += ["-t", ",".join(templates)]
         for target in ctx.targets:
-            args.append(target)
+            args += ["-u", target]
         return args
 
     def parse(self, stdout: bytes, ctx: StepContext) -> Iterable[Observation]:

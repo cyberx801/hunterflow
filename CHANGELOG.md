@@ -21,6 +21,17 @@ All notable changes to HunterFlow are documented here. The format follows
 - Recon targets are shaped per tool: subfinder receives hostnames, httpx/katana receive URLs.
 - Login rate limiting is per account (proxy-safe) in addition to a broader per-IP limit.
 
+### Fixed
+- Docker stack verified end to end (PostgreSQL, Redis, worker, scheduler, web, demo target).
+- Dramatiq broker is configured in the API process as well, so enqueuing uses `HF_REDIS_URL`.
+- Worker starts through the Dramatiq argument parser instead of passing a raw list.
+- Tool arguments corrected against the installed binaries: katana targets via `-u`,
+  katana `-disable-redirects`, httpx no invalid `-follow-redirects false`, nuclei `-dr`.
+- Katana crawl scope regexes now match full URLs (they previously matched only hosts and
+  filtered out the seed).
+- Web image bakes the in-network API URL at build time (rewrites are evaluated at build).
+- Data volume layout no longer conflicts with the worker tmpfs mounts.
+
 ## [0.1.0] - 2026-10-29
 
 Research Workspace MVP: programs and scope, recon orchestration, asset/endpoint inventory,

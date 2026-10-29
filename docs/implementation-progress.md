@@ -28,16 +28,17 @@
 | Frontend build (`next build`) | success |
 | Playwright E2E (`workflows.spec.ts`) | 6 passed |
 | Lint (`ruff`) | clean |
-| Screenshots (real captures) | 11 files in `docs/screenshots/` |
+| Screenshots (real captures) | 12 files in `docs/screenshots/` |
 | Asset list benchmark (10k rows) | p95 73 ms (budget < 500 ms) |
-| Live smoke (web → api proxy → SQLite + migrations) | verified |
+| Docker Compose stack (db, redis, api, worker, scheduler, web, demo) | up, healthy |
+| Real `web_inventory` scan of `demo.local` | completed: subfinder + httpx + katana, 8 endpoints, 32 monitoring events |
+| Scheduler | created a job automatically for a due schedule |
 
 ## Known limitations
 
-See `docs/known-issues.md`. Main ones: single-user; real (non-dry-run) scans need Redis and
-the worker (Docker deployment); the Docker toolchain image was not built end to end on the
-development host; per-request scope control inside third-party tools is limited (documented
-residual risk).
+See `docs/known-issues.md`. Main ones: single-user; removal detection is heuristic;
+per-request scope control inside third-party tools is limited (documented residual risk);
+no log rotation by default.
 
 ## Next
 

@@ -39,6 +39,7 @@ services:
       HF_SECRET_KEY: ${HF_SECRET_KEY:?set HF_SECRET_KEY in .env (see .env.example)}
       HF_DATABASE_URL: postgresql+psycopg://hunterflow:${HF_DB_PASSWORD:-hunterflow}@db:5432/hunterflow
       HF_REDIS_URL: redis://redis:6379/0
+      REDIS_URL: redis://redis:6379/0
       HF_DATA_DIR: /srv/hunterflow/data
       HF_BOOTSTRAP_USERNAME: ${HF_BOOTSTRAP_USERNAME:-}
       HF_BOOTSTRAP_PASSWORD: ${HF_BOOTSTRAP_PASSWORD:-}
@@ -61,7 +62,7 @@ services:
       start_period: 20s
     security_opt: [no-new-privileges:true]
     read_only: true
-    tmpfs: [/tmp, /srv/hunterflow/data/runs]
+    tmpfs: [/tmp]
 
   worker:
     build:
@@ -80,7 +81,7 @@ services:
         condition: service_healthy
     security_opt: [no-new-privileges:true]
     read_only: true
-    tmpfs: [/tmp, /srv/hunterflow/data/runs]
+    tmpfs: [/tmp]
     deploy:
       resources:
         limits:

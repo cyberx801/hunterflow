@@ -10,6 +10,9 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
+# Next.js evaluates rewrites at build time; bake the in-network API URL.
+ARG HF_BACKEND_URL=http://api:8000
+ENV HF_BACKEND_URL=${HF_BACKEND_URL}
 RUN npm run build
 
 FROM node:20-alpine AS runner
