@@ -1,4 +1,4 @@
-﻿"""Application factory: middleware, routers, exception handlers, bootstrap."""
+"""Application factory: middleware, routers, exception handlers, bootstrap."""
 
 from __future__ import annotations
 

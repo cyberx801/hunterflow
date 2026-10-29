@@ -1,4 +1,4 @@
-﻿[project]
+[project]
 name = "hunterflow-backend"
 version = "0.2.1"
 description = "HunterFlow API and worker - self-hosted bug bounty research workspace"

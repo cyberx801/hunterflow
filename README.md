@@ -1,4 +1,4 @@
-﻿# HunterFlow
+# HunterFlow
 
 A self-hosted workspace for authorized bug bounty research. It keeps your recon output,
 your hypotheses, the traffic you compare, and the evidence behind each finding in one

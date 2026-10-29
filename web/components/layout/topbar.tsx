@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useQuery } from "@tanstack/react-query";
 import { ChevronsUpDown, Loader2, LogOut } from "lucide-react";
