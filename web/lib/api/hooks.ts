@@ -263,3 +263,33 @@ export function useAudit(page: number) {
       ),
   });
 }
+
+export function useSchedules(programId?: string) {
+  return useQuery({
+    queryKey: ["schedules", programId],
+    queryFn: () =>
+      apiFetch<import("./types").Schedule[]>(
+        `/api/v1/schedules${programId ? `?program_id=${programId}` : ""}`
+      ),
+  });
+}
+
+export function useMonitoringEvents(filters: Record<string, string | undefined>) {
+  const qs = new URLSearchParams();
+  Object.entries(filters).forEach(([k, v]) => v && qs.set(k, v));
+  return useQuery({
+    queryKey: ["monitoring-events", qs.toString()],
+    queryFn: () =>
+      apiFetch<import("./types").MonitoringEvent[]>(
+        `/api/v1/monitoring/events?limit=200&${qs.toString()}`
+      ),
+    refetchInterval: 15000,
+  });
+}
+
+export function useMonitoringStatus() {
+  return useQuery({
+    queryKey: ["monitoring-status"],
+    queryFn: () => apiFetch<import("./types").MonitoringStatus>("/api/v1/monitoring/status"),
+  });
+}

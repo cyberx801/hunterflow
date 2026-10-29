@@ -225,6 +225,17 @@ def run_scan_job(db_factory, settings: Settings, job_id: str) -> None:
         job.finished_at = datetime.now(UTC)
         db.commit()
         log.info("job_completed", job_id=job_id)
+
+        # Monitoring: change detection + opt-in notifications never fail the job.
+        try:
+            from ..services import monitoring
+
+            program = program_of(db, job)
+            events = monitoring.finalize_scan_changes(db, job)
+            if events:
+                monitoring.notify_changes(db, program, job, events, settings)
+        except Exception:
+            log.exception("monitoring_failed", job_id=job_id)
     except InterruptedError:
         job = load_job(db, job_id)
         job.status = JobStatus.cancelled.value

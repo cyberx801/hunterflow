@@ -37,6 +37,11 @@ class Settings(BaseSettings):
     bootstrap_username: str | None = None
     bootstrap_password: str | None = None
 
+    # Monitoring / scheduler
+    webhook_url: str | None = None
+    scheduler_interval_seconds: int = 45
+    min_schedule_minutes: int = 15
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def _split_origins(cls, v: object) -> object:

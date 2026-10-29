@@ -170,6 +170,7 @@ class Asset(Base, TimestampMixin):
     tech: Mapped[dict | None] = mapped_column(JSONVariant, nullable=True)
     tags: Mapped[list | None] = mapped_column(JSONVariant, nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    missed_scans: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     first_seen: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
     last_seen: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow, onupdate=utcnow, nullable=False
@@ -301,8 +302,44 @@ class ScanJob(Base, TimestampMixin):
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_by: Mapped[str | None] = mapped_column(GUID, ForeignKey("users.id"), nullable=True)
+    schedule_id: Mapped[str | None] = mapped_column(GUID, ForeignKey("scheduled_scans.id"), nullable=True)
 
     __table_args__ = (Index("ix_scan_jobs_program_status_created", "program_id", "status", "created_at"),)
+
+
+class ScheduledScan(Base, TimestampMixin):
+    __tablename__ = "scheduled_scans"
+
+    id: Mapped[str] = mapped_column(GUID, primary_key=True, default=new_uuid)
+    program_id: Mapped[str] = mapped_column(GUID, ForeignKey("programs.id"), nullable=False, index=True)
+    profile: Mapped[str] = mapped_column(String(64), nullable=False)
+    interval_minutes: Mapped[int] = mapped_column(Integer, nullable=False, default=360)
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    targets: Mapped[list | None] = mapped_column(JSONVariant, nullable=True)
+    templates: Mapped[list | None] = mapped_column(JSONVariant, nullable=True)
+    notify: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    next_run_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    last_run_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_job_id: Mapped[str | None] = mapped_column(GUID, nullable=True)
+    created_by: Mapped[str | None] = mapped_column(GUID, ForeignKey("users.id"), nullable=True)
+
+
+class MonitoringEvent(Base):
+    __tablename__ = "monitoring_events"
+
+    id: Mapped[str] = mapped_column(GUID, primary_key=True, default=new_uuid)
+    program_id: Mapped[str] = mapped_column(GUID, ForeignKey("programs.id"), nullable=False, index=True)
+    scan_job_id: Mapped[str | None] = mapped_column(GUID, ForeignKey("scan_jobs.id"), nullable=True)
+    kind: Mapped[str] = mapped_column(String(48), nullable=False, index=True)
+    entity_type: Mapped[str] = mapped_column(String(32), nullable=False)
+    entity_id: Mapped[str | None] = mapped_column(GUID, nullable=True)
+    entity_value: Mapped[str] = mapped_column(String(2048), nullable=False)
+    detail: Mapped[dict | None] = mapped_column(JSONVariant, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, nullable=False, index=True
+    )
+
+    __table_args__ = (Index("ix_monitoring_program_created", "program_id", "created_at"),)
 
 
 class ToolRun(Base):

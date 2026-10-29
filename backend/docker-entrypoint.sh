@@ -9,6 +9,8 @@ echo "[hunterflow] applying database migrations"
 echo "[hunterflow] starting $HF_PROCESS"
 if [ "$HF_PROCESS" = "worker" ]; then
   exec /venv/bin/python -m app.jobs.worker --processes 2 --threads 8
+elif [ "$HF_PROCESS" = "scheduler" ]; then
+  exec /venv/bin/python -m app.jobs.scheduler
 else
   exec /venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
 fi

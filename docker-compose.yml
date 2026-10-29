@@ -3,6 +3,7 @@ name: hunterflow
 services:
   db:
     image: postgres:16-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_USER: hunterflow
       POSTGRES_PASSWORD: ${HF_DB_PASSWORD:-hunterflow}
@@ -19,6 +20,7 @@ services:
 
   redis:
     image: redis:7-alpine
+    restart: unless-stopped
     command: ["redis-server", "--save", "", "--appendonly", "no"]
     networks: [internal]
     healthcheck:
@@ -31,6 +33,7 @@ services:
   api:
     build:
       context: ./backend
+    restart: unless-stopped
     environment: &hf-env
       HF_ENV: production
       HF_SECRET_KEY: ${HF_SECRET_KEY:?set HF_SECRET_KEY in .env (see .env.example)}
@@ -39,6 +42,9 @@ services:
       HF_DATA_DIR: /srv/hunterflow/data
       HF_BOOTSTRAP_USERNAME: ${HF_BOOTSTRAP_USERNAME:-}
       HF_BOOTSTRAP_PASSWORD: ${HF_BOOTSTRAP_PASSWORD:-}
+      HF_WEBHOOK_URL: ${HF_WEBHOOK_URL:-}
+      HF_SCHEDULER_INTERVAL_SECONDS: ${HF_SCHEDULER_INTERVAL_SECONDS:-45}
+      HF_MIN_SCHEDULE_MINUTES: ${HF_MIN_SCHEDULE_MINUTES:-15}
     volumes:
       - evidence:/srv/hunterflow/data
     networks: [internal]
@@ -60,6 +66,7 @@ services:
   worker:
     build:
       context: ./backend
+    restart: unless-stopped
     environment:
       <<: *hf-env
       HF_PROCESS: worker
@@ -79,13 +86,37 @@ services:
         limits:
           memory: 1G
 
+  scheduler:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    environment:
+      <<: *hf-env
+      HF_PROCESS: scheduler
+    volumes:
+      - evidence:/srv/hunterflow/data
+    networks: [internal]
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    security_opt: [no-new-privileges:true]
+    read_only: true
+    tmpfs: [/tmp]
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
   web:
     build:
       context: ./web
+    restart: unless-stopped
     environment:
       HF_BACKEND_URL: http://api:8000
     ports:
-      - "${HF_WEB_PORT:-3000}:3000"
+      - "${HF_WEB_BIND:-127.0.0.1}:${HF_WEB_PORT:-3000}:3000"
     networks: [internal]
     depends_on:
       api:

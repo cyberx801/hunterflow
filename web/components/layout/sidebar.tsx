@@ -11,6 +11,7 @@ import {
   Globe,
   LayoutDashboard,
   Network,
+  Radar,
   Settings,
   TrafficCone,
 } from "lucide-react";
@@ -20,6 +21,7 @@ const NAV = [
   { href: "/overview", label: "Overview", icon: LayoutDashboard },
   { href: "/programs", label: "Programs", icon: Globe },
   { href: "/recon", label: "Recon", icon: Network },
+  { href: "/monitoring", label: "Monitoring", icon: Radar },
   { href: "/assets", label: "Assets", icon: Boxes },
   { href: "/endpoints", label: "Endpoints", icon: Activity },
   { href: "/research", label: "Research", icon: FlaskConical },

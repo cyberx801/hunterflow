@@ -52,6 +52,7 @@ def create_scan_job(
     dry_run: bool,
     actor_id: str | None = None,
     ip: str | None = None,
+    schedule_id: str | None = None,
 ) -> ScanJob:
     if profile not in PROFILES:
         raise ApiError(ErrorCode.VALIDATION, f"Unknown profile: {profile}")
@@ -85,6 +86,7 @@ def create_scan_job(
         dry_run=dry_run,
         status=JobStatus.queued.value,
         created_by=actor_id,
+        schedule_id=schedule_id,
     )
     db.add(job)
     db.flush()

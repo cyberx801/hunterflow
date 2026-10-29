@@ -8,7 +8,8 @@ HunterFlow is not a scanner and not an exploitation framework. It orchestrates e
 tools (subfinder, httpx, katana, nuclei), stores what they find, and gives you a place to
 think about it.
 
-Status: v0.1.0, single-user, early. Read the limitations before you rely on it.
+Status: v0.2 (research workspace + monitoring), single-user, early. Read the limitations
+before you rely on it.
 
 ---
 
@@ -32,6 +33,9 @@ Status: v0.1.0, single-user, early. Read the limitations before you rely on it.
   authenticated endpoint.
 - **Reports.** Markdown, JSON, HTML. Every report states whether the finding was verified.
   Nothing is submitted anywhere automatically.
+- **Continuous monitoring.** Scheduled scans per program with change detection: new assets
+  and endpoints, and removals only after two consecutive misses. Optional webhook
+  notifications (Discord/Slack), opt-in per schedule.
 
 ## Requirements
 
@@ -101,12 +105,29 @@ HF_BOOTSTRAP_PASSWORD=a-long-password-here
 To try a real scan without touching any third-party system, follow
 [docs/local-demo.md](docs/local-demo.md): it scans the synthetic demo app in this repo.
 
+To run it continuously on a server (scheduled scans, change detection, webhook alerts), see
+[docs/server-deployment.md](docs/server-deployment.md) and the
+[monitoring playbook](docs/monitoring-playbook.md).
+
+## Screens
+
+Captured from the running application.
+
+| | |
+|---|---|
+| ![Overview](docs/screenshots/overview.png) | ![Scope](docs/screenshots/scope.png) |
+| ![Research](docs/screenshots/research.png) | ![Traffic](docs/screenshots/traffic.png) |
+| ![Findings](docs/screenshots/findings.png) | ![Monitoring](docs/screenshots/monitoring.png) |
+
+More in `docs/screenshots/` (programs, endpoints, recon, first-run account).
+
 ## How it works
 
 ```
 Browser  ->  web (Next.js)  ->  api (FastAPI)  ->  PostgreSQL
                                              ->  Redis
                                              ->  worker (Dramatiq + pinned tools)
+                                             ->  scheduler (due scheduled scans)
 ```
 
 The API and the worker are the same codebase. Long jobs never run inside an HTTP request.
@@ -176,8 +197,15 @@ redaction, and evidence isolation. See [`specs/testing-strategy.md`](specs/testi
 - Single user, no teams or roles yet.
 - The Docker toolchain image has not been exercised end to end on every platform; the
   binaries are pinned with checksums in `backend/integrations/tools.lock`.
-- No scheduled monitoring, no continuous proxy capture, no PDF export, no AI features.
-- These are deliberate v0.1.0 boundaries, listed in [`docs/known-issues.md`](docs/known-issues.md).
+- No continuous proxy capture, no PDF export, no AI features.
+- These are deliberate boundaries, listed in [`docs/known-issues.md`](docs/known-issues.md).
+
+## Roadmap
+
+- v0.1 — research workspace (done).
+- v0.2 — monitoring: schedules, change detection, webhook notifications (done).
+- v0.3 — optional local AI assistant (Ollama, off by default).
+- v0.4 — multi-user collaboration.
 
 ## License
 

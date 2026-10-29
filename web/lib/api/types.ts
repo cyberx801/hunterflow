@@ -267,3 +267,36 @@ export interface SettingsView {
   evidence_retention_days: number;
   tools: { name: string; version: string | null; available: boolean; last_checked: string | null }[];
 }
+
+export interface Schedule {
+  id: string;
+  program_id: string;
+  profile: string;
+  interval_minutes: number;
+  enabled: boolean;
+  notify: boolean;
+  targets: string[] | null;
+  templates: string[] | null;
+  next_run_at: string;
+  last_run_at: string | null;
+  last_job_id: string | null;
+  created_at: string;
+}
+
+export interface MonitoringEvent {
+  id: string;
+  program_id: string;
+  scan_job_id: string | null;
+  kind: string;
+  entity_type: string;
+  entity_id: string | null;
+  entity_value: string;
+  detail: Record<string, unknown> | null;
+  created_at: string;
+}
+
+export interface MonitoringStatus {
+  webhook_configured: boolean;
+  scheduler_interval_seconds: number;
+  min_schedule_minutes: number;
+}

@@ -16,6 +16,7 @@ from .api.v1 import (
     evidence,
     findings,
     health,
+    monitoring,
     platform,
     programs,
     reports,
@@ -71,7 +72,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     app = FastAPI(
         title="HunterFlow API",
-        version="0.1.0",
+        version="0.2.0",
         docs_url=None if settings.is_production else "/docs",
         openapi_url=None if settings.is_production else "/openapi.json",
         lifespan=lifespan,
@@ -112,6 +113,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(evidence.router, prefix="/api/v1")
     app.include_router(reports.router, prefix="/api/v1")
     app.include_router(platform.router, prefix="/api/v1")
+    app.include_router(monitoring.router, prefix="/api/v1")
     return app
 
 
