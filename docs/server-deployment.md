@@ -99,6 +99,37 @@ Discord and Slack incoming webhooks both work (the payload includes `content` an
 Notifications are opt-in per schedule and are skipped silently if the URL is not set. The
 webhook URL lives only in the environment, not in the database.
 
+## Troubleshooting
+
+**Image pulls fail with `httpReadSeeker ... EOF` from CloudFront.**
+Some networks cannot finish large Docker Hub layer downloads. Pull the same official image
+from Google's mirror and tag it locally:
+
+```bash
+docker pull mirror.gcr.io/library/redis:7-alpine
+docker tag  mirror.gcr.io/library/redis:7-alpine redis:7-alpine
+
+docker pull mirror.gcr.io/library/postgres:16-alpine
+docker tag  mirror.gcr.io/library/postgres:16-alpine postgres:16-alpine
+
+docker pull mirror.gcr.io/library/python:3.12-slim
+docker tag  mirror.gcr.io/library/python:3.12-slim python:3.12-slim
+
+docker pull mirror.gcr.io/library/node:20-alpine
+docker tag  mirror.gcr.io/library/node:20-alpine node:20-alpine
+```
+
+The backend image installs `uv` from PyPI, so `ghcr.io` access is not required.
+
+**Worker stays `queued`.** Check `docker compose logs worker`; the broker must point at Redis
+(`HF_REDIS_URL` and `REDIS_URL` are both set in compose).
+
+**Login does not stick behind a proxy.** In production the session cookie is `Secure`; serve
+the UI over HTTPS.
+
+**A schedule did not run.** Confirm exactly one `scheduler` container is up and that the
+program has at least one scope rule (scans with an empty policy are rejected).
+
 ## Backups
 
 Only two things hold state: the Postgres volume and the evidence volume.
