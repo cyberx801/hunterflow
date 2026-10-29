@@ -196,10 +196,86 @@ def finalize_scan_changes(db: Session, job: ScanJob) -> list[MonitoringEvent]:
 
     if events:
         db.add_all(events)
+    # Always commit: observed assets reset their miss counter even when a run
+    # produces no change events.
     db.commit()
     if events:
         log.info("monitoring_events", job_id=job.id, count=len(events))
+
+    if job.schedule_id:
+        try:
+            _maybe_create_draft_cards(db, job, events)
+        except Exception:
+            log.exception("auto_cards_failed", job_id=job.id)
+            db.rollback()
+
     return events
+
+
+MAX_AUTO_CARDS_PER_RUN = 20
+
+
+def _maybe_create_draft_cards(db: Session, job: ScanJob, events: list[MonitoringEvent]) -> None:
+    """Optional: turn new endpoints/JS files into draft research cards.
+
+    Opt-in per schedule (`auto_cards`). Cards are marked as auto-created and need
+    human review; duplicates for the same endpoint are skipped.
+    """
+    from ..db.models import ResearchCard
+    from .research import refresh_priority
+
+    schedule = db.get(ScheduledScan, job.schedule_id)
+    if schedule is None or not schedule.auto_cards:
+        return
+
+    created = 0
+    for event in events:
+        if created >= MAX_AUTO_CARDS_PER_RUN:
+            break
+        if event.kind not in ("new_endpoint", "new_js_file") or not event.entity_id:
+            continue
+        existing = db.scalar(
+            select(ResearchCard).where(
+                ResearchCard.program_id == job.program_id,
+                ResearchCard.endpoint_id == event.entity_id,
+            )
+        )
+        if existing is not None:
+            continue
+        is_js = event.kind == "new_js_file"
+        card = ResearchCard(
+            program_id=job.program_id,
+            endpoint_id=event.entity_id,
+            title=("Review new JS: " if is_js else "Investigate new endpoint: ") + event.entity_value,
+            hypothesis=(
+                "This JavaScript file was discovered recently. Extract endpoints, parameters and "
+                "secrets, and look for client-side authorization decisions."
+                if is_js
+                else "This endpoint was discovered recently. Verify authentication, object-level "
+                "authorization, and input handling with authorized test accounts."
+            ),
+            test_category="js_analysis" if is_js else "new_endpoint",
+            methodology=(
+                "1) Fetch the file and note loaded modules.\n2) List API calls and parameters.\n"
+                "3) Check for hardcoded secrets or debug flags.\n4) Record observations."
+                if is_js
+                else "1) Identify auth requirements.\n2) Try both test accounts.\n"
+                "3) Compare responses across roles.\n4) Record evidence."
+            ),
+            notes_md=(
+                f"Auto-created by monitoring scan {job.id[:8]} on "
+                f"{datetime.now(UTC).date().isoformat()}. Review before testing."
+            ),
+            status="not_started",
+        )
+        db.add(card)
+        db.flush()
+        refresh_priority(db, card)
+        created += 1
+
+    if created:
+        db.commit()
+        log.info("auto_cards_created", job_id=job.id, count=created)
 
 
 def notify_changes(
@@ -283,4 +359,7 @@ def run_due_schedules(db: Session, settings: Settings) -> int:
         enqueued += 1
 
     return enqueued
+
+
+
 

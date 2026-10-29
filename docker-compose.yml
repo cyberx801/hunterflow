@@ -144,7 +144,7 @@ services:
     profiles: [demo]
     networks:
       internal:
-        aliases: [demo.local]
+        aliases: [demo.local, demo.example.com]
     security_opt: [no-new-privileges:true]
 
 networks:

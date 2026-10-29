@@ -88,7 +88,7 @@ export function Topbar() {
 
       <div className="ml-auto flex items-center gap-2">
         <Badge tone="muted" className="hidden md:inline-flex">
-          v0.4.0
+          v0.5.0
         </Badge>
         <Dropdown>
           <DropdownTrigger asChild>
@@ -112,5 +112,6 @@ export function Topbar() {
     </header>
   );
 }
+
 
 

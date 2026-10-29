@@ -76,6 +76,7 @@ export default function MonitoringPage() {
   const [profile, setProfile] = useState("passive");
   const [interval, setIntervalMinutes] = useState("360");
   const [notify, setNotify] = useState(true);
+  const [autoCards, setAutoCards] = useState(false);
   const [targets, setTargets] = useState("");
 
   const invalidate = () => {
@@ -94,6 +95,7 @@ export default function MonitoringPage() {
           targets: targets.split("\n").map((t) => t.trim()).filter(Boolean),
           templates: [],
           notify,
+          auto_cards: autoCards,
           enabled: true,
         }),
         csrf,
@@ -186,12 +188,12 @@ export default function MonitoringPage() {
                     inputMode="numeric"
                   />
                   <p className="text-xs text-text-muted">
-                    Minimum {status?.min_schedule_minutes ?? 15} minutes. Passive every 6–12h,
+                    Minimum {status?.min_schedule_minutes ?? 15} minutes. Passive every 6â€“12h,
                     inventory daily is a sensible start.
                   </p>
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Targets (optional — defaults to scope allow rules)</Label>
+                  <Label>Targets (optional â€” defaults to scope allow rules)</Label>
                   <Textarea
                     rows={3}
                     className="mono"
@@ -203,6 +205,10 @@ export default function MonitoringPage() {
                 <label className="flex cursor-pointer items-center gap-2 text-[13px] text-text-primary">
                   <Checkbox checked={notify} onCheckedChange={(v) => setNotify(!!v)} />
                   Send webhook notifications for this schedule
+                </label>
+                <label className="flex cursor-pointer items-center gap-2 text-[13px] text-text-primary">
+                  <Checkbox checked={autoCards} onCheckedChange={(v) => setAutoCards(!!v)} />
+                  Create draft research cards for new endpoints and JS files
                 </label>
                 {!status?.webhook_configured && (
                   <p className="text-xs text-warning">
@@ -257,11 +263,14 @@ export default function MonitoringPage() {
                     <tr key={s.id} className="border-b border-border/50">
                       <td className="px-3 py-2.5 text-text-primary">{s.profile.replace(/_/g, " ")}</td>
                       <td className="mono px-3 py-2.5 text-text-secondary">{s.interval_minutes} min</td>
-                      <td className="px-3 py-2.5 text-xs text-text-secondary">{s.enabled ? formatTime(s.next_run_at) : "—"}</td>
+                      <td className="px-3 py-2.5 text-xs text-text-secondary">{s.enabled ? formatTime(s.next_run_at) : "â€”"}</td>
                       <td className="px-3 py-2.5 text-xs text-text-secondary">
                         {s.last_run_at ? timeAgo(s.last_run_at) : "never"}
                       </td>
-                      <td className="px-3 py-2.5 text-xs text-text-secondary">{s.notify ? "on" : "off"}</td>
+                      <td className="px-3 py-2.5 text-xs text-text-secondary">
+                        {s.notify ? "on" : "off"}
+                        {s.auto_cards ? " · cards" : ""}
+                      </td>
                       <td className="px-3 py-2.5">
                         <Badge tone={s.enabled ? "success" : "muted"}>
                           {s.enabled ? "enabled" : "disabled"}
@@ -359,3 +368,4 @@ export default function MonitoringPage() {
     </>
   );
 }
+

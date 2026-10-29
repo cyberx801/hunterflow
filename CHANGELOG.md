@@ -4,6 +4,21 @@ All notable changes to HunterFlow are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.5.0] - 2026-10-29
+
+### Added
+- Optional auto-created draft research cards for new endpoints and JS files, enabled per
+  schedule (`auto_cards`). Cards are marked as auto-created, skip existing endpoint cards,
+  and are capped per run.
+- `web_crawl` profile (subfinder, dnsx, httpx, katana) for faster inventory without the
+  passive URL step.
+
+### Fixed
+- Monitoring now commits miss-counter resets even when a run produces no change events.
+- katana receives the container resolver (`/etc/resolv.conf`) so internal names resolve.
+- Demo target is also reachable as `demo.example.com` (valid registrable domain for crawler
+  scope).
+
 ## [0.4.0] - 2026-10-29
 
 ### Added

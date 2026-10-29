@@ -66,3 +66,11 @@ The first account is the administrator. Admins can create members, promote or de
 
 If `HF_AI_ENABLED=true` and an OpenAI-compatible endpoint is reachable (local Ollama by default), research cards and findings show an **AI assist** panel. It summarizes only the data on that page, cannot scan or verify anything, and its output is labeled advisory. It is never used for authorization decisions or to mark findings verified.
 
+
+## 10. Monitoring
+
+**Monitoring** schedules recurring scans per program. After each run HunterFlow records new assets, new endpoints, new JS files, HTTP status/technology changes, and removals after two consecutive misses. Notifications are opt-in per schedule.
+
+If you enable **Create draft research cards** for a schedule, each new endpoint or JS file becomes a `not_started` research card with a starting hypothesis and methodology. Cards note that they were auto-created; they are deduplicated per endpoint and never verified automatically.
+
+Suggested cadence: passive every 6-12h, web_inventory daily, curated checks weekly.

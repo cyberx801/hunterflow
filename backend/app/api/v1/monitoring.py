@@ -38,6 +38,7 @@ def _out(schedule: ScheduledScan) -> ScheduleOut:
         interval_minutes=schedule.interval_minutes,
         enabled=schedule.enabled,
         notify=schedule.notify,
+        auto_cards=schedule.auto_cards,
         targets=schedule.targets,
         templates=schedule.templates,
         next_run_at=schedule.next_run_at,
@@ -85,6 +86,7 @@ def create_schedule(
         targets=body.targets,
         templates=body.templates,
         notify=body.notify,
+        auto_cards=body.auto_cards,
         next_run_at=datetime.now(UTC),  # due immediately; scheduler picks it up
         created_by=user.id,
     )
@@ -222,3 +224,4 @@ def monitoring_status(
         "scheduler_interval_seconds": settings.scheduler_interval_seconds,
         "min_schedule_minutes": settings.min_schedule_minutes,
     }
+

@@ -1,7 +1,7 @@
 # HunterFlow — Implementation Progress
 
 - **Updated:** 2026-10-29
-- **Status:** v0.4 (workspace + monitoring + dnsx/gau + PDF, AI assist, team users, optional screenshots)
+- **Status:** v0.5 (workspace + monitoring + auto draft cards + tooling + PDF, AI assist, team users, optional screenshots)
 
 ## Gates & Baseline
 
@@ -23,7 +23,7 @@
 
 | Suite | Result |
 |---|---|
-| Backend unit + integration + security (pytest) | 169 passed |
+| Backend unit + integration + security (pytest) | 174 passed |
 | Frontend typecheck (`tsc --noEmit`) | clean |
 | Frontend build (`next build`) | success |
 | Playwright E2E (`workflows.spec.ts`) | 6 passed |

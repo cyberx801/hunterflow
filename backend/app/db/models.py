@@ -320,6 +320,7 @@ class ScheduledScan(Base, TimestampMixin):
     targets: Mapped[list | None] = mapped_column(JSONVariant, nullable=True)
     templates: Mapped[list | None] = mapped_column(JSONVariant, nullable=True)
     notify: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    auto_cards: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     next_run_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     last_run_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     last_job_id: Mapped[str | None] = mapped_column(GUID, nullable=True)

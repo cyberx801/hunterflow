@@ -56,3 +56,6 @@
 
 | C4 | 2026-10-29 | v0.4: richer change detection (status/tech, new JS files) and optional screenshot support (separate build arg, chromium image) | Owner instruction | Additive; screenshots are opt-in, stored on the data volume, served only through an authenticated endpoint |
 
+
+| C5 | 2026-10-29 | v0.5: optional auto draft research cards from monitoring changes; web_crawl profile; katana container resolver | Owner instruction | Additive, opt-in per schedule; auto-created cards require human review and are deduplicated per endpoint |
+

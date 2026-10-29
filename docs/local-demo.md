@@ -4,7 +4,7 @@ This is the safe way to see a real scan end to end: HunterFlow scans the synthet
 demo application in this repository, not anything on the internet.
 
 The demo app is deliberately flawed (see `demo/README.md`) and reachable inside the
-Docker network as `demo.local:8080`.
+Docker network as `demo.example.com:8080`.
 
 ## 1. Start the stack with the demo target
 
@@ -22,11 +22,11 @@ In the UI:
 1. **Programs → New program** (e.g. "Local Demo").
 2. Open the **Scope** tab and add a rule:
    - Kind: **Exact domain**
-   - Value: `demo.local`
+   - Value: `demo.example.com`
    - Effect: **Allow**
 3. Click **Publish policy version**.
 
-Optional check: paste `http://demo.local:8080/` into **Scope preview** and confirm it is
+Optional check: paste `http://demo.example.com:8080/` into **Scope preview** and confirm it is
 *allowed*.
 
 ## 3. Run the scan
@@ -34,16 +34,16 @@ Optional check: paste `http://demo.local:8080/` into **Scope preview** and confi
 **Recon → New scan**:
 
 - Profile: **Web Inventory** (`subfinder` → `dnsx` → `httpx` → `gau` → `katana`)
-- Targets: `http://demo.local:8080`
+- Targets: `http://demo.example.com:8080`
 - Dry run: off
 
 Start the scan. The job detail shows each tool run, its arguments, exit code, and output.
-`subfinder` receives the bare host `demo.local` (it cannot take a URL), while `httpx` and
+`subfinder` receives the bare host `demo.example.com` (it cannot take a URL), while `httpx` and
 `katana` receive the full URL.
 
 ## 4. Look at the results
 
-- **Assets** should contain `http://demo.local:8080`.
+- **Assets** should contain `http://demo.example.com:8080`.
 - **Endpoints** should contain paths found by the crawler, such as `/`, `/api/v1/version`,
   and `/api/orders`.
 
@@ -63,3 +63,4 @@ vulnerability report.
 
 If you only want to see the workflow, tick **Dry run**. It completes immediately, executes
 no tools, and shows "Dry run — no tools were executed." in the job detail.
+

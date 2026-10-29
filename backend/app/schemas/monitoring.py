@@ -9,12 +9,13 @@ from pydantic import BaseModel, Field
 
 class ScheduleCreate(BaseModel):
     program_id: str
-    profile: str = Field(pattern=r"^(passive|light_recon|web_inventory|url_discovery|screenshots|vuln_checks)$")
+    profile: str = Field(pattern=r"^(passive|light_recon|web_inventory|url_discovery|web_crawl|screenshots|vuln_checks)$")
     interval_minutes: int = Field(default=360, le=10080)
     targets: list[str] = Field(default_factory=list, max_length=200)
     templates: list[str] = Field(default_factory=list, max_length=50)
     notify: bool = True
     enabled: bool = True
+    auto_cards: bool = False
 
 
 class ScheduleUpdate(BaseModel):
@@ -23,6 +24,7 @@ class ScheduleUpdate(BaseModel):
     templates: list[str] | None = None
     notify: bool | None = None
     enabled: bool | None = None
+    auto_cards: bool | None = None
 
 
 class ScheduleOut(BaseModel):
@@ -32,6 +34,7 @@ class ScheduleOut(BaseModel):
     interval_minutes: int
     enabled: bool
     notify: bool
+    auto_cards: bool
     targets: list | None
     templates: list | None
     next_run_at: datetime
@@ -50,4 +53,6 @@ class MonitoringEventOut(BaseModel):
     entity_value: str
     detail: dict | None
     created_at: datetime
+
+
 

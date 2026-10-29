@@ -33,6 +33,16 @@ PROFILES: dict[str, dict] = {
             {"tool": "katana", "options": {}},
         ],
     },
+    "web_crawl": {
+        "label": "Web Crawl",
+        "description": "Enumeration, DNS, probing, and authorized crawling without passive URL lookups.",
+        "steps": [
+            {"tool": "subfinder", "options": {}},
+            {"tool": "dnsx", "options": {}},
+            {"tool": "httpx", "options": {}},
+            {"tool": "katana", "options": {}},
+        ],
+    },
     "url_discovery": {
         "label": "Passive URL Discovery",
         "description": "Subdomain enumeration plus historical URL discovery from public sources. No requests to targets.",
@@ -94,3 +104,4 @@ def resolve_profile(profile: str, templates: list[str] | None = None) -> dict:
             steps.append({**step, "options": {**step.get("options", {}), "templates": selected}})
         spec["steps"] = steps
     return spec
+

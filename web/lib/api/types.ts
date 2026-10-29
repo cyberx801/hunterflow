@@ -276,6 +276,7 @@ export interface Schedule {
   interval_minutes: number;
   enabled: boolean;
   notify: boolean;
+  auto_cards: boolean;
   targets: string[] | null;
   templates: string[] | null;
   next_run_at: string;
@@ -323,5 +324,6 @@ export interface UserAccount {
   is_active: boolean;
   created_at: string;
 }
+
 
 

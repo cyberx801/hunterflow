@@ -243,6 +243,8 @@ class KatanaAdapter:
             args += ["-cs", "|".join(in_scope)]
         if out_scope:
             args += ["-cos", "|".join(out_scope)]
+        if ctx.extra.get("resolvers_file"):
+            args += ["-r", ctx.extra["resolvers_file"]]
         for target in ctx.targets:
             args += ["-u", target]
         return args
@@ -338,4 +340,5 @@ def get_adapter(name: str) -> ToolAdapter:
     if adapter is None:
         raise KeyError(f"Unknown tool adapter: {name}")
     return adapter
+
 

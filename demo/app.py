@@ -66,6 +66,7 @@ def index():
   <p>Synthetic, intentionally inconsistent app for local testing only.</p>
   <ul>
     <li><a href="/api/v1/version">version</a></li>
+    <li><a href="/api/v1/status">status</a></li>
     <li><a href="/api/users/me">me</a></li>
     <li><a href="/api/orders">orders</a></li>
     <li><a href="/api/orders/1">order 1</a></li>
@@ -84,6 +85,12 @@ def healthz():
 @app.get("/api/v1/version")
 def version():
     return {"version": "1.2.3", "environment": "demo"}
+
+
+@app.get("/api/v1/status")
+def status():
+    # Added to exercise monitoring/auto-card behaviour in the demo.
+    return {"status": "operational", "version": "1.2.3"}
 
 
 @app.post("/api/login")

@@ -182,6 +182,10 @@ def run_scan_job(db_factory, settings: Settings, job_id: str) -> None:
             ctx = _build_context(
                 tool_name, step_targets, policy, options, settings, targets_file=str(targets_file)
             )
+            if tool_name == "katana":
+                resolvers = _write_resolvers(run_dir)
+                if resolvers:
+                    ctx.extra["resolvers_file"] = resolvers
             args = adapter.build_args(ctx, binary)
 
             tool_run = ToolRun(
@@ -368,3 +372,22 @@ def _scope_regexes(policy: Policy):
             continue
         (allow if rule.effect.value == "allow" else deny).append(pattern)
     return allow, deny
+
+def _write_resolvers(run_dir) -> str | None:
+    """Give katana the container resolver so it can resolve internal names."""
+    from pathlib import Path
+
+    try:
+        text = Path("/etc/resolv.conf").read_text(encoding="utf-8")
+    except OSError:
+        return None
+    servers = [
+        line.split()[1]
+        for line in text.splitlines()
+        if line.startswith("nameserver") and len(line.split()) > 1
+    ]
+    if not servers:
+        return None
+    path = run_dir / "resolvers.txt"
+    path.write_text("\n".join(servers), encoding="utf-8")
+    return str(path)

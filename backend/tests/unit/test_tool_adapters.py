@@ -79,3 +79,20 @@ def test_httpx_screenshot_args_and_parse():
     shot = next(o for o in observations if o.kind == "screenshot")
     assert shot.payload["bytes_b64"] == png
 
+
+def test_katana_resolvers_and_scope_args():
+    from app.integrations.tools.registry import KatanaAdapter
+
+    ctx = StepContext(
+        targets=["http://demo.example.com:8080"],
+        extra={
+            "no_follow_redirects": True,
+            "in_scope_regexes": ["(?i)^https?://demo\\.example\\.com"],
+            "resolvers_file": "/tmp/resolvers.txt",
+        },
+    )
+    args = KatanaAdapter().build_args(ctx, "/usr/local/bin/katana")
+    assert "-disable-redirects" in args
+    assert "-r" in args
+    assert args[args.index("-r") + 1] == "/tmp/resolvers.txt"
+    assert "-cs" in args

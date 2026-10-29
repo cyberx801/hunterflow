@@ -1,6 +1,6 @@
 [project]
 name = "hunterflow-backend"
-version = "0.4.0"
+version = "0.5.0"
 description = "HunterFlow API and worker - self-hosted bug bounty research workspace"
 requires-python = ">=3.12"
 dependencies = [
@@ -51,6 +51,7 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["app"]
+
 
 
 
