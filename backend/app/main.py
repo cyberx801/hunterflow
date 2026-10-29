@@ -9,7 +9,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select
 
-from .api.v1 import auth, health
+from .api.v1 import auth, health, programs, scans, scopes
 from .core.config import Settings, get_settings
 from .core.errors import install_exception_handlers
 from .core.logging import configure_logging, correlation_id_var, get_logger
@@ -87,6 +87,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     app.include_router(health.router, prefix="/api/v1")
     app.include_router(auth.router, prefix="/api/v1")
+    app.include_router(programs.router, prefix="/api/v1")
+    app.include_router(scopes.router, prefix="/api/v1")
+    app.include_router(scans.router, prefix="/api/v1")
     return app
 
 

@@ -16,7 +16,8 @@ from ..core.config import Settings
 
 
 class GUID(TypeDecorator):
-    """UUID that works on both PostgreSQL (native) and SQLite (CHAR(36))."""
+    """UUID keys that yield str values in Python (Pydantic-friendly) while
+    using native UUID on PostgreSQL and CHAR(36) on SQLite."""
 
     impl = sa.String(36)
     cache_ok = True
@@ -29,16 +30,14 @@ class GUID(TypeDecorator):
     def process_bind_param(self, value, dialect):
         if value is None:
             return None
-        if isinstance(value, uuid.UUID):
-            if dialect.name == "postgresql":
-                return value
-            return str(value)
-        return value
+        if dialect.name == "postgresql":
+            return uuid.UUID(str(value))
+        return str(value)
 
     def process_result_value(self, value, dialect):
         if value is None:
             return None
-        return uuid.UUID(str(value))
+        return str(value)
 
 
 class JSONVariant(TypeDecorator):
@@ -70,8 +69,9 @@ class TimestampMixin:
     )
 
 
-def new_uuid() -> uuid.UUID:
-    return uuid.uuid4()
+def new_uuid() -> str:
+    """String UUID keys (see GUID type): Pydantic-friendly everywhere."""
+    return str(uuid.uuid4())
 
 
 def build_engine(settings: Settings) -> Engine:
