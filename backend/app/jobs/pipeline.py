@@ -56,12 +56,31 @@ def _rule_roots(policy: Policy) -> list[str]:
     return sorted(roots)
 
 
+def tool_targets(user_targets: list[str], tool_name: str) -> list[str]:
+    """Shape user-provided targets for a tool.
+
+    subfinder enumerates a eponymous domain and rejects URLs/ports, so it gets
+    bare hostnames. httpx/katana/nuclei take URLs unchanged.
+    """
+    if tool_name != "subfinder":
+        return list(user_targets)
+    hosts: list[str] = []
+    for target in user_targets:
+        if "://" in target:
+            host = Policy.host_of_url(target)
+        else:
+            host = target.split("/", 1)[0].split(":", 1)[0]
+        if host and host not in hosts:
+            hosts.append(host)
+    return hosts
+
+
 def _step_targets(db: Session, job: ScanJob, policy: Policy, tool_name: str) -> tuple[list[str], set[str]]:
     """Targets per tool step; `trusted_seeds` are rule-derived enumeration inputs
     for passive tools (authorized by construction)."""
     user_targets = (job.target_filter or {}).get("targets")
     if user_targets:
-        return list(user_targets), set()
+        return tool_targets(user_targets, tool_name), set()
 
     if tool_name == "subfinder":
         seeds = _rule_roots(policy)

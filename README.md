@@ -98,6 +98,9 @@ HF_BOOTSTRAP_PASSWORD=a-long-password-here
 6. **Findings.** Record a finding, attach evidence, and generate a Markdown report. Marking
    it verified requires an explicit confirmation.
 
+To try a real scan without touching any third-party system, follow
+[docs/local-demo.md](docs/local-demo.md): it scans the synthetic demo app in this repo.
+
 ## How it works
 
 ```
