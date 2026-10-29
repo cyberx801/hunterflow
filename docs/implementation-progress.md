@@ -1,7 +1,7 @@
 # HunterFlow — Implementation Progress
 
 - **Updated:** 2026-10-29
-- **Status:** v0.2 (research workspace + continuous monitoring)
+- **Status:** v0.2.1 (research workspace + monitoring + dnsx/gau)
 
 ## Gates & Baseline
 
@@ -23,7 +23,7 @@
 
 | Suite | Result |
 |---|---|
-| Backend unit + integration + security (pytest) | 148 passed |
+| Backend unit + integration + security (pytest) | 154 passed |
 | Frontend typecheck (`tsc --noEmit`) | clean |
 | Frontend build (`next build`) | success |
 | Playwright E2E (`workflows.spec.ts`) | 6 passed |
@@ -31,7 +31,7 @@
 | Screenshots (real captures) | 12 files in `docs/screenshots/` |
 | Asset list benchmark (10k rows) | p95 73 ms (budget < 500 ms) |
 | Docker Compose stack (db, redis, api, worker, scheduler, web, demo) | up, healthy |
-| Real `web_inventory` scan of `demo.local` | completed: subfinder + httpx + katana, 8 endpoints, 32 monitoring events |
+| Real `web_inventory` scan of `demo.local` | completed: subfinder + dnsx + httpx + gau + katana, 8 endpoints, 32 monitoring events |
 | Scheduler | created a job automatically for a due schedule |
 
 ## Known limitations

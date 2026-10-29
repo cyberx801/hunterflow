@@ -23,9 +23,10 @@ Use **scope preview** to test candidate targets, then **publish a policy version
 
 **Recon → New scan.** Choose a profile:
 
-- **Passive Discovery** — subdomain enumeration, no requests to discovered hosts.
-- **Light Recon** — + HTTP probing.
-- **Web Inventory** — + authorized crawling (endpoints).
+- **Passive Discovery** — subdomain enumeration (`subfinder`), no requests to discovered hosts.
+- **Light Recon** — adds DNS resolution (`dnsx`) and HTTP probing (`httpx`).
+- **Web Inventory** — adds passive URL discovery (`gau`) and authorized crawling (`katana`).
+- **Passive URL Discovery** — subdomain enumeration plus historical URLs from public sources; no requests to targets.
 - **Vulnerability Checks** — curated `nuclei` templates only, explicitly selected.
 
 Optionally restrict targets (must be in scope) or run a **dry run**. Watch progress in the top bar; open the job for per-tool arguments and output (secrets redacted).

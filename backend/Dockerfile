@@ -29,6 +29,12 @@ RUN set -eux; \
     curl -fsSL -o nuclei.zip "https://github.com/projectdiscovery/nuclei/releases/download/v3.3.7/nuclei_3.3.7_linux_amd64.zip" \
     && echo "725ef892fcffd1b03ad4f0874942fc4b623c0419b6b6c6c91fe4a5a65671f77c  nuclei.zip" | sha256sum -c - \
     && unzip -o nuclei.zip nuclei && chmod +x nuclei && rm nuclei.zip; \
+    curl -fsSL -o dnsx.zip "https://github.com/projectdiscovery/dnsx/releases/download/v1.3.1/dnsx_1.3.1_linux_amd64.zip" \
+    && echo "438b964653056dd51dcfe614b1a16f8bced3cc48a1d27bc07cc6fdf2ef2a9533  dnsx.zip" | sha256sum -c - \
+    && unzip -o dnsx.zip dnsx && chmod +x dnsx && rm dnsx.zip; \
+    curl -fsSL -o gau.tar.gz "https://github.com/lc/gau/releases/download/v2.2.4/gau_2.2.4_linux_amd64.tar.gz" \
+    && echo "10e2e248c37cafb0be3f6d2931125296b95cd4186066d596d47fa417237529a9  gau.tar.gz" | sha256sum -c - \
+    && tar -xzf gau.tar.gz gau && chmod +x gau && rm gau.tar.gz; \
     ls -la /opt/tools
 
 # --- App stage ---

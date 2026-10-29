@@ -17,6 +17,7 @@ from ..core.logging import get_logger
 from ..db.models import (
     Asset,
     AssetObservation,
+    AssetRelation,
     Endpoint,
     EndpointObservation,
     Finding,
@@ -143,6 +144,42 @@ def ingest(
         endpoint.last_seen = datetime.now(UTC)
         db.add(EndpointObservation(endpoint_id=endpoint.id, tool_run_id=tool_run_id, raw=payload))
         touched.append(asset)
+
+    elif kind == "url":
+        # Passive URL discovery (e.g. gau): historical URL, not a live probe.
+        url = payload["url"]
+        asset = _get_or_create_asset(
+            db, program, AssetKind.URL, normalize_url(url), url, policy, tool_run_id
+        )
+        touched.append(asset)
+
+    elif kind == "dns_record":
+        host = payload["host"]
+        host_asset = _get_or_create_asset(
+            db, program, kind_of(host), host, host, policy, tool_run_id
+        )
+        for ip in (payload.get("ips") or [])[:20]:
+            ip_value = str(ip)
+            ip_asset = _get_or_create_asset(
+                db, program, AssetKind.IP, ip_value, ip_value, policy, tool_run_id
+            )
+            exists = db.scalar(
+                select(AssetRelation).where(
+                    AssetRelation.parent_id == host_asset.id,
+                    AssetRelation.child_id == ip_asset.id,
+                    AssetRelation.kind == "resolves_to",
+                )
+            )
+            if exists is None:
+                db.add(
+                    AssetRelation(
+                        program_id=program.id,
+                        parent_id=host_asset.id,
+                        child_id=ip_asset.id,
+                        kind="resolves_to",
+                    )
+                )
+        touched.append(host_asset)
 
     elif kind == "scanner_finding":
         existing = db.scalar(

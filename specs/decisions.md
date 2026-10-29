@@ -43,3 +43,10 @@
 | D4 | Evidence files on disk + DB metadata | ADR-008 |
 | D5 | Deterministic rule-based prioritization first | ADR-009 |
 | D6 | Cooperative job cancellation (dramatiq-abort + subprocess kill) | ADR-010 |
+
+## Post-Approval Change Records
+
+| # | Date | Change | Authorization | Impact |
+|---|---|---|---|---|
+| C1 | 2026-10-29 | v0.2 monitoring delivered (schedules, change detection, webhooks, scheduler service) | Owner instruction to add continuous monitoring for server use | Additive; no change to scope enforcement or security model |
+| C2 | 2026-10-29 | v0.2.1 tool expansion: added `dnsx` and `gau` adapters and a `url_discovery` profile | Owner instruction "sıradaki adımları yap" (do the next steps) | Additive adapters behind the same scope-policy gate; DNS and historical URLs stored as assets, not probed automatically |

@@ -33,7 +33,7 @@ Optional check: paste `http://demo.local:8080/` into **Scope preview** and confi
 
 **Recon → New scan**:
 
-- Profile: **Web Inventory** (`subfinder` → `httpx` → `katana`)
+- Profile: **Web Inventory** (`subfinder` → `dnsx` → `httpx` → `gau` → `katana`)
 - Targets: `http://demo.local:8080`
 - Dry run: off
 

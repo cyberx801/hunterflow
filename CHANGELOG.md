@@ -4,6 +4,20 @@ All notable changes to HunterFlow are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.1] - 2026-10-29
+
+### Added
+- `dnsx` adapter: DNS resolution, stores IP assets and `resolves_to` relations.
+- `gau` adapter: passive URL discovery from public sources; historical URLs are stored as
+  URL assets and are not probed automatically.
+- `url_discovery` scan profile (subfinder + gau). `light_recon` and `web_inventory` now
+  include dnsx and gau.
+- Per-step target files for tools that read a target list (`dnsx -l`).
+
+### Changed
+- Recon target shaping is tool-aware: `subfinder`, `dnsx` and `gau` receive hostnames;
+  `httpx`, `katana` and `nuclei` receive URLs.
+
 ## [0.2.0] - 2026-10-29
 
 ### Added

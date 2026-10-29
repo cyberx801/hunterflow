@@ -65,6 +65,49 @@ class SubfinderAdapter:
             )
 
 
+class DnsxAdapter:
+    name = "dnsx"
+
+    def detect(self, binary: str) -> ToolInfo | None:
+        info = _detect_version(binary)
+        if info is None:
+            return None
+        info.name = self.name
+        info.version = info.version.replace("dnsx", "").strip()
+        return info
+
+    def build_args(self, ctx: StepContext, binary: str) -> list[str]:
+        args = [binary, "-silent", "-json", "-a", "-resp"]
+        if ctx.rate_limit:
+            args += ["-rl", str(ctx.rate_limit)]
+        if ctx.targets_file:
+            args += ["-l", ctx.targets_file]
+        return args
+
+    def parse(self, stdout: bytes, ctx: StepContext) -> Iterable[Observation]:
+        for line in stdout.decode("utf-8", "replace").splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                data = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            host = data.get("host")
+            if not host:
+                continue
+            yield Observation(
+                kind="dns_record",
+                payload={
+                    "host": host,
+                    "ips": data.get("a") or [],
+                    "cname": data.get("cname") or [],
+                    "status_code": data.get("status_code"),
+                },
+                source=self.name,
+            )
+
+
 class HttpxAdapter:
     name = "httpx"
 
@@ -116,6 +159,53 @@ class HttpxAdapter:
                     "ip": data.get("a") or (data.get("a", [])),
                     "host": data.get("host"),
                 },
+                source=self.name,
+            )
+
+
+class GauAdapter:
+    """Passive URL discovery from public sources (Wayback, Common Crawl, OTX).
+
+    These are historical URLs, not live requests: results are stored as URL
+    assets for the inventory and are not probed automatically.
+    """
+
+    name = "gau"
+
+    def detect(self, binary: str) -> ToolInfo | None:
+        info = _detect_version(binary, flag="-version")
+        if info is None:
+            return None
+        info.name = self.name
+        info.version = info.version.replace("gau", "").strip()
+        return info
+
+    def build_args(self, ctx: StepContext, binary: str) -> list[str]:
+        args = [binary, "--json", "--subs", "--threads", "3", "--timeout", "20"]
+        for target in ctx.targets:
+            args.append(target)
+        return args
+
+    def parse(self, stdout: bytes, ctx: StepContext) -> Iterable[Observation]:
+        for line in stdout.decode("utf-8", "replace").splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            url = None
+            source = None
+            try:
+                data = json.loads(line)
+                if isinstance(data, dict):
+                    url = data.get("url") or data.get("URL")
+                    source = data.get("source")
+            except json.JSONDecodeError:
+                if line.startswith(("http://", "https://")):
+                    url = line
+            if not url or not str(url).startswith(("http://", "https://")):
+                continue
+            yield Observation(
+                kind="url",
+                payload={"url": url, "source": source},
                 source=self.name,
             )
 
@@ -226,7 +316,9 @@ class NucleiAdapter:
 
 ADAPTERS: dict[str, ToolAdapter] = {
     "subfinder": SubfinderAdapter(),
+    "dnsx": DnsxAdapter(),
     "httpx": HttpxAdapter(),
+    "gau": GauAdapter(),
     "katana": KatanaAdapter(),
     "nuclei": NucleiAdapter(),
 }

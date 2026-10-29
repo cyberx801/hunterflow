@@ -25,3 +25,9 @@ def test_httpx_and_katana_keep_urls():
     assert tool_targets(targets, "httpx") == targets
     assert tool_targets(targets, "katana") == targets
     assert tool_targets(targets, "nuclei") == targets
+
+
+def test_host_tools_get_hosts():
+    targets = ["http://demo.local:8080/a"]
+    for tool in ("dnsx", "gau"):
+        assert tool_targets(targets, tool) == ["demo.local"]

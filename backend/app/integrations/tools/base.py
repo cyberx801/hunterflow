@@ -35,6 +35,7 @@ class StepContext:
     output_json: bool = True
     rate_limit: int | None = None  # requests per second
     timeout_seconds: int = 600
+    targets_file: str | None = None  # run-dir file listing targets, for tools that need -l
     extra: dict = field(default_factory=dict)
 
     def add(self, *args: str) -> list[str]:

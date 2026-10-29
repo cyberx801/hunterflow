@@ -15,16 +15,30 @@ PROFILES: dict[str, dict] = {
     },
     "light_recon": {
         "label": "Light Recon",
-        "description": "Passive enumeration plus low-impact HTTP probing of discovered hosts.",
-        "steps": [{"tool": "subfinder", "options": {}}, {"tool": "httpx", "options": {}}],
+        "description": "Passive enumeration, DNS resolution, and low-impact HTTP probing.",
+        "steps": [
+            {"tool": "subfinder", "options": {}},
+            {"tool": "dnsx", "options": {}},
+            {"tool": "httpx", "options": {}},
+        ],
     },
     "web_inventory": {
         "label": "Web Inventory",
-        "description": "Enumeration, probing, and authorized crawling for endpoint collection.",
+        "description": "Enumeration, DNS, probing, passive URL discovery, and authorized crawling.",
         "steps": [
             {"tool": "subfinder", "options": {}},
+            {"tool": "dnsx", "options": {}},
             {"tool": "httpx", "options": {}},
+            {"tool": "gau", "options": {}},
             {"tool": "katana", "options": {}},
+        ],
+    },
+    "url_discovery": {
+        "label": "Passive URL Discovery",
+        "description": "Subdomain enumeration plus historical URL discovery from public sources. No requests to targets.",
+        "steps": [
+            {"tool": "subfinder", "options": {}},
+            {"tool": "gau", "options": {}},
         ],
     },
     "vuln_checks": {

@@ -62,7 +62,7 @@ def tool_targets(user_targets: list[str], tool_name: str) -> list[str]:
     subfinder enumerates a eponymous domain and rejects URLs/ports, so it gets
     bare hostnames. httpx/katana/nuclei take URLs unchanged.
     """
-    if tool_name != "subfinder":
+    if tool_name not in ("subfinder", "gau", "dnsx"):
         return list(user_targets)
     hosts: list[str] = []
     for target in user_targets:
@@ -82,7 +82,7 @@ def _step_targets(db: Session, job: ScanJob, policy: Policy, tool_name: str) -> 
     if user_targets:
         return tool_targets(user_targets, tool_name), set()
 
-    if tool_name == "subfinder":
+    if tool_name in ("subfinder", "gau"):
         seeds = _rule_roots(policy)
         return seeds, set(seeds)
 
@@ -95,7 +95,7 @@ def _step_targets(db: Session, job: ScanJob, policy: Policy, tool_name: str) -> 
             Asset.scope_status == "in_scope",
         )
     ).all()
-    if tool_name in ("httpx", "katana"):
+    if tool_name in ("httpx", "katana", "dnsx"):
         hosts = sorted({a.value_normalized for a in rows if a.type in ("subdomain", "domain")})
         return hosts, set()
     if tool_name == "nuclei":
@@ -172,7 +172,12 @@ def run_scan_job(db_factory, settings: Settings, job_id: str) -> None:
                 continue
 
             run_dir = run_root / f"{idx:02d}-{tool_name}"
-            ctx = _build_context(tool_name, step_targets, policy, options, settings)
+            run_dir.mkdir(parents=True, exist_ok=True)
+            targets_file = run_dir / "targets.txt"
+            targets_file.write_text("\n".join(step_targets), encoding="utf-8")
+            ctx = _build_context(
+                tool_name, step_targets, policy, options, settings, targets_file=str(targets_file)
+            )
             args = adapter.build_args(ctx, binary)
 
             tool_run = ToolRun(
@@ -305,7 +310,14 @@ def _filter_targets(
     return out
 
 
-def _build_context(tool_name: str, targets: list[str], policy: Policy, options: dict, settings: Settings):
+def _build_context(
+    tool_name: str,
+    targets: list[str],
+    policy: Policy,
+    options: dict,
+    settings: Settings,
+    targets_file: str | None = None,
+):
     from ..integrations.tools.base import StepContext
 
     extra: dict = {}
@@ -322,6 +334,7 @@ def _build_context(tool_name: str, targets: list[str], policy: Policy, options: 
         targets=targets,
         rate_limit=(options.get("rate_limit")),
         timeout_seconds=settings.tool_timeout_seconds,
+        targets_file=targets_file,
         extra=extra,
     )
 

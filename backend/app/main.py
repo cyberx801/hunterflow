@@ -1,4 +1,4 @@
-"""Application factory: middleware, routers, exception handlers, bootstrap."""
+﻿"""Application factory: middleware, routers, exception handlers, bootstrap."""
 
 from __future__ import annotations
 
@@ -76,7 +76,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     app = FastAPI(
         title="HunterFlow API",
-        version="0.2.0",
+        version="0.2.1",
         docs_url=None if settings.is_production else "/docs",
         openapi_url=None if settings.is_production else "/openapi.json",
         lifespan=lifespan,

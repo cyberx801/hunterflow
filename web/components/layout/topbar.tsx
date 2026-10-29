@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useQuery } from "@tanstack/react-query";
 import { ChevronsUpDown, Loader2, LogOut } from "lucide-react";
@@ -88,7 +88,7 @@ export function Topbar() {
 
       <div className="ml-auto flex items-center gap-2">
         <Badge tone="muted" className="hidden md:inline-flex">
-          v0.2.0
+          v0.2.1
         </Badge>
         <Dropdown>
           <DropdownTrigger asChild>

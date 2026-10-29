@@ -1,11 +1,11 @@
-# HunterFlow
+﻿# HunterFlow
 
 A self-hosted workspace for authorized bug bounty research. It keeps your recon output,
 your hypotheses, the traffic you compare, and the evidence behind each finding in one
 place, and it refuses to touch anything that is not explicitly in scope.
 
 HunterFlow is not a scanner and not an exploitation framework. It orchestrates existing
-tools (subfinder, httpx, katana, nuclei), stores what they find, and gives you a place to
+tools (subfinder, dnsx, httpx, gau, katana, nuclei), stores what they find, and gives you a place to
 think about it.
 
 Status: v0.2 (research workspace + monitoring), single-user, early. Read the limitations
@@ -19,8 +19,7 @@ before you rely on it.
   checked against the effective policy first. Wildcards do not authorize the apex or third
   parties, deny rules win, and anything ambiguous is blocked until you confirm it.
 - **Recon as a job.** Scans run in a worker with progress, cancellation, timeouts and a
-  record of the exact tool version and arguments used. Passive, light, inventory, and
-  curated-template profiles.
+  record of the exact tool version and arguments used. Passive, light, inventory, passive-URL, and curated-template profiles.
 - **An inventory instead of file trees.** Assets and endpoints are normalized and
   deduplicated, keep their provenance, and carry a scope status.
 - **Research cards.** A hypothesis, methodology, accounts needed, checklist, notes, and
@@ -89,11 +88,11 @@ HF_BOOTSTRAP_PASSWORD=a-long-password-here
 
 ### A first run through the app
 
-1. **Programs → New program.** Name it, open the Scope tab.
+1. **Programs â†’ New program.** Name it, open the Scope tab.
 2. Add a rule like `*.example.com` with effect *allow*. Use **Scope preview** with a target
    inside and one outside the scope to see the decision for each. Then **Publish policy
    version**. Nothing can be scanned until the policy has at least one rule.
-3. **Recon → New scan.** Choose *Passive Discovery*, optionally run a dry run first, and
+3. **Recon â†’ New scan.** Choose *Passive Discovery*, optionally run a dry run first, and
    start it. The job shows up in the list; open it for the tool arguments and output.
 4. **Assets / Endpoints** now have data. Open an endpoint and create a research card from a
    template.
@@ -176,13 +175,13 @@ More detail in [`docs/development.md`](docs/development.md) and
 ## Tests
 
 ```
-backend: 148 passed (unit, integration, security)
+backend: 154 passed (unit, integration, security)
 e2e:     6 passed (Playwright, critical journeys)
 lint:    ruff clean, tsc clean
 ```
 
 The stack was also exercised end to end with Docker Compose (PostgreSQL, Redis, worker,
-scheduler, synthetic demo target): a real `web_inventory` scan ran subfinder, httpx and
+scheduler, synthetic demo target): a real `web_inventory` scan ran subfinder, dnsx, httpx, gau and
 katana against `demo.local`, produced assets and endpoints, recorded change events, and a
 schedule fired automatically from the scheduler.
 
@@ -208,11 +207,12 @@ redaction, and evidence isolation. See [`specs/testing-strategy.md`](specs/testi
 
 ## Roadmap
 
-- v0.1 — research workspace (done).
-- v0.2 — monitoring: schedules, change detection, webhook notifications (done).
-- v0.3 — optional local AI assistant (Ollama, off by default).
-- v0.4 — multi-user collaboration.
+- v0.1 â€” research workspace (done).
+- v0.2 â€” monitoring: schedules, change detection, webhook notifications (done).
+- v0.3 â€” optional local AI assistant (Ollama, off by default).
+- v0.4 â€” multi-user collaboration.
 
 ## License
 
 MIT. See [`LICENSE`](LICENSE).
+

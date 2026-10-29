@@ -7,9 +7,11 @@
 | Tool | Version pinned | Used for | Key flags | Scope controls available | Residual risk |
 |---|---|---|---|---|---|
 | **subfinder** | release pin | passive subdomain discovery | `-d`, `-silent`, `-json` (`-oJ`), `-all` off by default | passive; no target requests | none for target; third-party API sources optional |
-| **httpx** | release pin | probing/fingerprinting | `-json`, `-silent`, `-follow-redirects` **off**, `-title`, `-tech-detect`, `-status-code`, `-no-color`, rate flags | IP/allow-deny lists; no-follow | redirects not followed (verified flag exists) |
-| **katana** | release pin | endpoint extraction | `-jsonl`, `-silent`, `-field-scope` per-run, `-cs`/`-cos` regexes from policy | in/out-scope regexes derived from policy | crawl can reach third-party pages → out-of-scope regexes + post-filter by policy engine |
-| **nuclei** | release pin + template subset hash | curated vuln checks | `-jsonl`, `-t` explicit template list, `-follow-redirects` off, `-no-interactsh` default, rate flags | host exclusions; explicit template selection | template bodies control requests; subset curated + reviewed; interactsh off by default |
+| **dnsx** | release pin | DNS resolution (A/CNAME) | `-silent`, `-json`, `-a`, `-resp`, `-l <targets-file>` | target list filtered by policy first | passive DNS lookups via public resolvers |
+| **httpx** | release pin | probing/fingerprinting | `-json`, `-silent`, `-follow-redirects` **off**, `-title`, `-tech-detect`, `-status-code`, `-no-color`, rate flags | IP/allow-deny lists; no-follow | redirects not followed |
+| **gau** | release pin | passive URL discovery (Wayback/CC/OTX) | `--json`, `--subs`, `--threads`, `--timeout` | domains come from allow rules; historical URLs are not probed | results are historical, may be dead or third-party-backed |
+| **katana** | release pin | endpoint extraction | `-jsonl`, `-silent`, `-u`, `-jsonl`, `-disable-redirects`, `-cs`/`-cos` URL regexes from policy | in/out-scope URL regexes derived from policy | crawl can reach third-party pages → out-of-scope regexes + post-filter by policy engine |
+| **nuclei** | release pin + template subset hash | curated vuln checks | `-jsonl`, `-t` explicit template list, `-dr` (redirects disabled), `-no-interactsh` default, rate flags | host exclusions; explicit template selection | template bodies control requests; subset curated + reviewed; interactsh off by default |
 
 Rules:
 - Args always arrays; never `shell=True`; targets validated by the policy engine first.
