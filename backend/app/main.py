@@ -9,7 +9,21 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select
 
-from .api.v1 import auth, health, programs, scans, scopes
+from .api.v1 import (
+    assets,
+    auth,
+    endpoints,
+    evidence,
+    findings,
+    health,
+    platform,
+    programs,
+    reports,
+    research,
+    scans,
+    scopes,
+    traffic,
+)
 from .core.config import Settings, get_settings
 from .core.errors import install_exception_handlers
 from .core.logging import configure_logging, correlation_id_var, get_logger
@@ -90,6 +104,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(programs.router, prefix="/api/v1")
     app.include_router(scopes.router, prefix="/api/v1")
     app.include_router(scans.router, prefix="/api/v1")
+    app.include_router(assets.router, prefix="/api/v1")
+    app.include_router(endpoints.router, prefix="/api/v1")
+    app.include_router(research.router, prefix="/api/v1")
+    app.include_router(traffic.router, prefix="/api/v1")
+    app.include_router(findings.router, prefix="/api/v1")
+    app.include_router(evidence.router, prefix="/api/v1")
+    app.include_router(reports.router, prefix="/api/v1")
+    app.include_router(platform.router, prefix="/api/v1")
     return app
 
 

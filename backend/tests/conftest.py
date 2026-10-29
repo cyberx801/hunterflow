@@ -2,7 +2,8 @@
 
 PostgreSQL is the supported runtime (ADR-005); tests here run against SQLite
 for speed, and the CI job runs the same suite against a real PostgreSQL
-service container via HF_DATABASE_URL.
+service container via HF_DATABASE_URL. Background actors run through a
+Dramatiq StubBroker with a short-lived Worker (no Redis required).
 """
 
 from __future__ import annotations
@@ -37,6 +38,22 @@ def app(settings):
     app.state.engine = engine
     app.state.session_factory = build_session_factory(engine)
     return app
+
+
+@pytest.fixture(autouse=True)
+def stub_broker(app):
+    """Bind background actors to the test app's DB + a StubBroker."""
+    from dramatiq.brokers.stub import StubBroker
+
+    from app.jobs import actors
+
+    actors.set_db_factory(lambda: app.state.session_factory)
+    stub = StubBroker()
+    for actor in (actors.run_scan_actor, actors.run_import_actor):
+        actor.broker = stub
+        stub.declare_actor(actor)
+    yield stub
+    stub.close()
 
 
 @pytest.fixture()

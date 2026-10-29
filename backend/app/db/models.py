@@ -374,7 +374,7 @@ class ImportJob(Base, TimestampMixin):
 # Research & traffic
 
 
-class HttpTransaction(Base):
+class HttpTransaction(Base, TimestampMixin):
     __tablename__ = "http_transactions"
 
     id: Mapped[str] = mapped_column(GUID, primary_key=True, default=new_uuid)

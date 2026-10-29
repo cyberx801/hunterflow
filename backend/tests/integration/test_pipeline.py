@@ -11,7 +11,6 @@ from pathlib import Path
 import pytest
 
 from app.db.models import PolicyVersion, ScanJob, Tool, ToolRun
-from app.jobs.broker import setup_broker
 from app.jobs.pipeline import run_scan_job
 from app.services.programs import publish_policy_version
 from app.services.scans import create_scan_job
@@ -54,21 +53,6 @@ def _setup_program(client, csrf) -> str:
     )
     assert resp.status_code == 200
     return program_id
-
-
-@pytest.fixture(autouse=True)
-def _stub_broker(settings, app):
-    from dramatiq.brokers.stub import StubBroker
-
-    from app.jobs import actors
-
-    actors.set_db_factory(lambda: app.state.session_factory)
-    stub = StubBroker()
-    for actor in (actors.run_scan_actor, actors.run_import_actor):
-        actor.broker = stub
-        stub.declare_actor(actor)
-    yield stub
-    stub.close()
 
 
 def _make_pipeline(settings, app, tmp_path, mode="output"):
