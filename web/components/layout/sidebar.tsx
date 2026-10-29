@@ -33,16 +33,17 @@ export function Sidebar() {
   const router = useRouter();
 
   return (
-    <aside className="flex w-14 shrink-0 flex-col border-r border-border bg-surface md:w-56">
+    <aside className="flex w-56 shrink-0 flex-col border-r border-border bg-surface max-sm:w-14">
       <button
-        className="flex h-14 items-center gap-2.5 border-b border-border px-3 md:px-4"
+        className="flex h-14 items-center gap-2.5 border-b border-border px-3"
         onClick={() => router.push("/overview")}
         aria-label="HunterFlow home"
+        title="HunterFlow"
       >
         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-accent/15 text-accent">
           <Crosshair className="h-4 w-4" />
         </span>
-        <span className="hidden text-sm font-semibold text-text-primary md:block">HunterFlow</span>
+        <span className="text-sm font-semibold text-text-primary max-sm:hidden">HunterFlow</span>
       </button>
       <nav className="flex-1 space-y-0.5 overflow-y-auto p-2" aria-label="Main navigation">
         {NAV.map((item) => {
@@ -54,6 +55,7 @@ export function Sidebar() {
             <button
               key={item.href}
               onClick={() => router.push(item.href)}
+              title={item.label}
               className={cn(
                 "flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] font-medium transition-colors",
                 active
@@ -63,7 +65,7 @@ export function Sidebar() {
               aria-current={active ? "page" : undefined}
             >
               <Icon className={cn("h-4 w-4 shrink-0", active ? "text-accent" : "text-text-muted")} />
-              <span className="hidden md:block">{item.label}</span>
+              <span className="max-sm:hidden">{item.label}</span>
             </button>
           );
         })}
@@ -71,6 +73,7 @@ export function Sidebar() {
       <div className="border-t border-border p-2">
         <button
           onClick={() => router.push("/settings")}
+          title="Settings"
           className={cn(
             "flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] font-medium transition-colors",
             pathname.startsWith("/settings")
@@ -79,7 +82,7 @@ export function Sidebar() {
           )}
         >
           <Settings className="h-4 w-4 shrink-0 text-text-muted" />
-          <span className="hidden md:block">Settings</span>
+          <span className="max-sm:hidden">Settings</span>
         </button>
       </div>
     </aside>
