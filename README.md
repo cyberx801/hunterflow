@@ -1,134 +1,179 @@
 # HunterFlow
 
-**From Recon to Research. One Intelligent Workspace.**
+A self-hosted workspace for authorized bug bounty research. It keeps your recon output,
+your hypotheses, the traffic you compare, and the evidence behind each finding in one
+place, and it refuses to touch anything that is not explicitly in scope.
 
-HunterFlow is a self-hosted, open-source research workspace for authorized bug bounty hunters and web/API penetration testers. It connects reconnaissance to structured investigation and evidence-backed reporting — while making **authorization and scope enforcement** a built-in property of every automated step.
+HunterFlow is not a scanner and not an exploitation framework. It orchestrates existing
+tools (subfinder, httpx, katana, nuclei), stores what they find, and gives you a place to
+think about it.
 
-> HunterFlow is a research assistant and workflow system. It is **not** an autonomous exploitation platform.
+Status: v0.1.0, single-user, early. Read the limitations before you rely on it.
 
 ---
 
-## 1. What problem does it solve?
+## What it does
 
-Bug bounty research is fragmented: recon output lives in per-tool file trees, your hypotheses and rejections live in notebooks, scope rules live in memory, and reports are assembled by hand. Existing tools each solve a slice — `subfinder`/`httpx`/`katana`/`nuclei` (discovery), Burp/Caido (traffic), DefectDojo/Faraday (team vulnerability management) — but none connect **authorization-aware discovery** to **hypothesis-driven research** and **evidence-backed reporting** in one workspace.
+- **Scope-first.** Every program has versioned scope rules. Every active request is
+  checked against the effective policy first. Wildcards do not authorize the apex or third
+  parties, deny rules win, and anything ambiguous is blocked until you confirm it.
+- **Recon as a job.** Scans run in a worker with progress, cancellation, timeouts and a
+  record of the exact tool version and arguments used. Passive, light, inventory, and
+  curated-template profiles.
+- **An inventory instead of file trees.** Assets and endpoints are normalized and
+  deduplicated, keep their provenance, and carry a scope status.
+- **Research cards.** A hypothesis, methodology, accounts needed, checklist, notes, and
+  a status that only moves through legal transitions.
+- **Traffic comparison.** Import a HAR, compare two authorized-account responses side by
+  side. Timestamps and tokens are masked. A status-code difference alone raises a review
+  notice, never a finding.
+- **Findings and evidence.** Separate states for "scanner said something", "I am testing
+  this", and "a human verified this". Evidence is hashed and only served through an
+  authenticated endpoint.
+- **Reports.** Markdown, JSON, HTML. Every report states whether the finding was verified.
+  Nothing is submitted anywhere automatically.
 
-## 2. Key features
+## Requirements
 
-- **Program & scope management** — versioned scope rules (exact/wildcard/CIDR/path/method), exclusion precedence, and a scope-preview validator.
-- **Authorization-aware recon** — every active outbound operation passes through the program's effective policy; out-of-scope targets are blocked (including redirects), and ambiguous targets require explicit confirmation.
-- **Recon orchestration** — managed subprocess adapters for `subfinder`, `httpx`, `katana`, and curated `nuclei` templates, with scan profiles, job lifecycle, cancellation, and execution history.
-- **Asset & endpoint intelligence** — normalized, deduplicated inventory with provenance, scope status, tech, and endpoint categorization (informational, never a vulnerability claim).
-- **Research workspace** — hypothesis cards with state machines, checklists, templates, and evidence linking.
-- **HTTP traffic import & comparison** — HAR import with secret redaction, side-by-side diffing with dynamic-value normalization, and explicit "review required" notices (a status-code difference alone never implies a vulnerability).
-- **Findings & evidence** — structured lifecycle with duplicate detection, human-only verification, SHA-256-integrity evidence storage.
-- **Explainable prioritization** — deterministic, rule-based scoring with visible factors (a score is a lead indicator, not a vulnerability claim).
-- **Reports** — Markdown/JSON/HTML export with an always-present verification banner.
-- **Self-hosted, no paid dependencies** — runs entirely locally with Docker Compose.
+- Docker and Docker Compose
+- About 2 GB of disk for the images (the worker image includes the recon binaries)
 
-## 3. Architecture overview
+No accounts, subscriptions or paid APIs are involved.
 
-```
-Browser ──► web (Next.js) ──► api (FastAPI) ──┬─► PostgreSQL
-                                              ├─► Redis
-                                              └─► worker (Dramatiq + pinned tools)
-```
-
-A **modular monolith**: one backend codebase runs as an API process and an isolated worker process. Tool binaries are pinned and bundled in the worker image (verified SHA-256). The scope policy engine (`domain/scope`) is the single authority consulted before every active network operation. Full details in [`specs/architecture/`](specs/architecture/system-architecture.md) and the [ADRs](specs/architecture/adr/).
-
-## 4. Screenshots
-
-Captured from the running application.
-
-| | |
-|---|---|
-| ![Overview](docs/screenshots/overview.png) | ![Programs](docs/screenshots/programs.png) |
-| ![Scope](docs/screenshots/scope.png) | ![Research](docs/screenshots/research.png) |
-| ![Traffic](docs/screenshots/traffic.png) | ![Findings](docs/screenshots/findings.png) |
-
-More: `docs/screenshots/` (endpoints, recon).
-
-## 5. Installation
-
-Requires Docker and Docker Compose.
+## Running it
 
 ```bash
-git clone https://github.com/your-org/hunterflow.git
+git clone https://github.com/cyberx801/hunterflow.git
 cd hunterflow
 cp .env.example .env
-# edit .env and set HF_SECRET_KEY to a long random value
+```
+
+Open `.env` and set `HF_SECRET_KEY` to a long random value:
+
+```bash
+python -c "import secrets; print(secrets.token_urlsafe(48))"
+```
+
+Then:
+
+```bash
 docker compose up -d
 ```
 
-Open http://localhost:3000 — the first-run flow creates your account. See [docs/installation.md](docs/installation.md) for details.
+Open http://localhost:3000.
 
-## 6. Quick start
+### The first account
 
-1. Create a **program** and add its **scope rules** (e.g. `*.example.com` allow).
-2. Use the **scope preview** to confirm the policy behaves as expected, then **publish a policy version**.
-3. Run a **passive discovery** scan from Recon. Results become **assets**.
-4. Open an **endpoint**, create a **research card** from a template (BOLA/IDOR, authn bypass…), and record observations.
-5. **Import a HAR** (or add manual transactions), then **compare** two authorized-account responses.
-6. Promote verified work to a **finding**, attach **evidence**, and **generate a report**.
+HunterFlow is single-user. On the very first launch there are no accounts, so the login page
+shows a **Create account** form instead of a sign-in form:
 
-## 7. Example workflow
+1. Pick a username.
+2. Pick a password of at least 12 characters.
+3. Submit. You are logged in and land on the Overview page.
 
-See [docs/user-guide.md](docs/user-guide.md) for a full walkthrough of the F1–F7 journeys.
+After that account exists, registration is closed; the same page is a normal sign-in form.
 
-## 8. Supported integrations
+If you would rather not create the account in the browser, set these before starting the
+stack and the account is created on boot:
 
-| Tool | Role | License |
-|---|---|---|
-| subfinder | passive subdomain discovery | MIT |
-| httpx | HTTP probing/fingerprinting | MIT |
-| katana | crawling / endpoint extraction | MIT |
-| nuclei | curated template checks (explicit selection only) | MIT |
-
-Traffic import via **HAR 1.2** (Burp Suite / Caido export). Pinned versions + checksums are recorded in [`backend/integrations/tools.lock`](backend/integrations/tools.lock).
-
-## 9. Security & authorization statement
-
-- Scope enforcement **precedes** every active network operation; out-of-scope redirects are not followed; discovered third-party assets default to out-of-scope.
-- Human-in-the-loop: findings are never auto-verified; no autonomous exploitation; no automatic submission.
-- Local-only data, zero telemetry; evidence is never statically served and is stored with SHA-256 integrity checks.
-- See [`SECURITY.md`](SECURITY.md) and [`specs/architecture/security.md`](specs/architecture/security.md) for the threat model and **residual risks**.
-
-**HunterFlow is for authorized testing only. Never use it against systems without explicit authorization.**
-
-## 10. Roadmap
-
-- **v0.2 — Monitoring:** scheduled scans, snapshots, change detection, opt-in notifications.
-- **v0.3 — Local AI:** optional Ollama-backed research assistant (off by default, deterministic fallback).
-- **v0.4 — Collaboration:** multi-user support.
-
-See [`specs/product-requirements.md`](specs/product-requirements.md) §10.
-
-## 11. Development
-
-```bash
-# Backend (Python 3.12 + uv)
-cd backend && uv sync && uv run pytest
-
-# Frontend (Node 20)
-cd web && npm install && npm run dev
-
-# E2E (requires running stack)
-cd web && npx playwright test e2e
+```env
+HF_BOOTSTRAP_USERNAME=admin
+HF_BOOTSTRAP_PASSWORD=a-long-password-here
 ```
 
-Full instructions in [docs/development.md](docs/development.md).
+### A first run through the app
 
-## 12. Contributing
+1. **Programs → New program.** Name it, open the Scope tab.
+2. Add a rule like `*.example.com` with effect *allow*. Use **Scope preview** with a target
+   inside and one outside the scope to see the decision for each. Then **Publish policy
+   version**. Nothing can be scanned until the policy has at least one rule.
+3. **Recon → New scan.** Choose *Passive Discovery*, optionally run a dry run first, and
+   start it. The job shows up in the list; open it for the tool arguments and output.
+4. **Assets / Endpoints** now have data. Open an endpoint and create a research card from a
+   template.
+5. **HTTP Traffic.** Import a HAR exported from Burp or Caido (tag it with an account
+   name), select two transactions, and compare them.
+6. **Findings.** Record a finding, attach evidence, and generate a Markdown report. Marking
+   it verified requires an explicit confirmation.
 
-Contributions welcome — read [CONTRIBUTING.md](CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT.md). Behavior changes must respect the project [constitution](specs/constitution.md) and be covered by tests.
+## How it works
 
-## 13. Known limitations
+```
+Browser  ->  web (Next.js)  ->  api (FastAPI)  ->  PostgreSQL
+                                             ->  Redis
+                                             ->  worker (Dramatiq + pinned tools)
+```
 
-- Single-user (v0.1.0); no multi-tenancy.
-- Recon workers require the Docker deployment (Redis broker); local dev without Docker uses synchronous dry-run only.
-- Per-request scope control inside third-party tools is limited (documented residual risk); full mitigation would require a proxy gateway (deferred).
-- PDF report export and continuous traffic interception are post-MVP.
-- See [docs/known-issues.md](docs/known-issues.md).
+The API and the worker are the same codebase. Long jobs never run inside an HTTP request.
+The scope engine is a pure function; it is the only thing that decides whether a host may
+be contacted, and it is covered by its own tests. Design notes and the decision records are
+in [`specs/`](specs/).
 
-## 14. License
+## Project layout
 
-[MIT](LICENSE). Vendored `nuclei` templates (if added) are MIT with attribution per [`backend/integrations/tools.lock`](backend/integrations/tools.lock).
+```
+backend/    FastAPI app, domain logic, worker, tool adapters, tests
+web/        Next.js frontend
+demo/       synthetic intentionally-flawed app used only by local tests
+specs/      product, architecture, design, and implementation specifications
+docs/       installation, development, user guide, benchmarks
+```
+
+## Development
+
+```bash
+# backend
+cd backend
+uv sync --all-groups
+uv run alembic upgrade head
+uv run uvicorn app.main:app --reload --port 8000
+uv run pytest
+
+# frontend
+cd web
+npm install
+npm run dev
+npm run typecheck
+npm run build
+
+# end to end (needs the two dev servers above running)
+cd web && npx playwright install chromium && npx playwright test e2e
+```
+
+Real scans need Redis and a worker process; the recommended way is `docker compose`.
+Without them the app still runs and dry runs work.
+
+More detail in [`docs/development.md`](docs/development.md) and
+[`docs/installation.md`](docs/installation.md).
+
+## Tests
+
+```
+backend: 133 passed (unit, integration, security)
+e2e:     6 passed (Playwright, critical journeys)
+lint:    ruff clean, tsc clean
+```
+
+The security suite attacks the real controls: scope bypasses, host tricks, CSRF, injection,
+redaction, and evidence isolation. See [`specs/testing-strategy.md`](specs/testing-strategy.md).
+
+## Security notes
+
+- Use it only against systems you are authorized to test.
+- Scope enforcement happens before the request, but third-party tools offer limited
+  per-request control. The residual risks are written down in
+  [`specs/architecture/security.md`](specs/architecture/security.md).
+- Run it locally. Do not expose it to the internet without TLS and an auth proxy.
+- Report vulnerabilities privately as described in [`SECURITY.md`](SECURITY.md).
+
+## Limitations
+
+- Single user, no teams or roles yet.
+- The Docker toolchain image has not been exercised end to end on every platform; the
+  binaries are pinned with checksums in `backend/integrations/tools.lock`.
+- No scheduled monitoring, no continuous proxy capture, no PDF export, no AI features.
+- These are deliberate v0.1.0 boundaries, listed in [`docs/known-issues.md`](docs/known-issues.md).
+
+## License
+
+MIT. See [`LICENSE`](LICENSE).
