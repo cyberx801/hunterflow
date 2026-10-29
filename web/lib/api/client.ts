@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 export interface Me {
   id: string;
   username: string;
+  is_admin: boolean;
   csrf_token: string;
 }
 

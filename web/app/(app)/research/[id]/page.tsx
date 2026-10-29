@@ -8,6 +8,7 @@ import { useCsrfToken, useResearchCard } from "@/lib/api/hooks";
 import { apiFetch } from "@/lib/api/client";
 import { Badge, Button, Card, CardContent, CardHeader, Checkbox, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Skeleton, Textarea } from "@/components/ui/primitives";
 import { PageHeader, StatusBadge } from "@/components/domain/shared";
+import { AiAssistCard } from "@/components/domain/ai-assist";
 import { formatTime } from "@/lib/utils";
 import type { ResearchCard } from "@/lib/api/types";
 
@@ -244,6 +245,8 @@ export default function ResearchCardPage({ params }: { params: { id: string } })
               </Button>
             </CardContent>
           </Card>
+
+          <AiAssistCard kind="research_card" id={card.id} />
         </div>
       </div>
     </>

@@ -300,3 +300,26 @@ export interface MonitoringStatus {
   scheduler_interval_seconds: number;
   min_schedule_minutes: number;
 }
+
+export interface AiStatus {
+  enabled: boolean;
+  model: string;
+  endpoint_configured: boolean;
+  api_key_configured: boolean;
+}
+
+export interface AiSummary {
+  text: string;
+  model: string;
+  source_chars: number;
+  disclaimer: string;
+}
+
+export interface UserAccount {
+  id: string;
+  username: string;
+  is_admin: boolean;
+  is_active: boolean;
+  created_at: string;
+}
+

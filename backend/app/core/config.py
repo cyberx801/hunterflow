@@ -42,6 +42,18 @@ class Settings(BaseSettings):
     scheduler_interval_seconds: int = 45
     min_schedule_minutes: int = 15
 
+    # Multi-user
+    allow_registration: bool = False
+
+    # Optional AI assistant (OpenAI-compatible endpoint; Ollama by default).
+    # Disabled unless explicitly enabled. No paid service is required.
+    ai_enabled: bool = False
+    ai_base_url: str = "http://host.docker.internal:11434/v1"
+    ai_model: str = "llama3.1:8b"
+    ai_api_key: str | None = None
+    ai_timeout_seconds: int = 60
+    ai_max_input_chars: int = 12000
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def _split_origins(cls, v: object) -> object:

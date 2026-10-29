@@ -4,6 +4,22 @@ All notable changes to HunterFlow are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.3.0] - 2026-10-29
+
+### Added
+- PDF report export (reportlab) and an authenticated report download endpoint.
+- Optional AI assistant over any OpenAI-compatible endpoint (local Ollama by default).
+  Disabled unless `HF_AI_ENABLED=true`; reads only the workspace data on the open page,
+  has no tool access, redacts secrets, and labels its output as advisory.
+- Team workspace: multiple accounts sharing one workspace, `is_admin` role, admin user
+  management (create, promote/demote, deactivate, reset password), optional open
+  registration via `HF_ALLOW_REGISTRATION`.
+- Settings tabs for team members and AI status; AI assist panels on research cards and
+  findings; PDF buttons and report downloads in the UI.
+
+### Changed
+- Report format is stored as a string; `pdf` is accepted alongside markdown, json, html.
+
 ## [0.2.1] - 2026-10-29
 
 ### Added

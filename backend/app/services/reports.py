@@ -157,6 +157,97 @@ def render_html(finding: Finding, db) -> str:
     )
 
 
+def _plain(text: str | None) -> str:
+    return (text or "_Not provided._")
+
+
+def render_pdf(finding: Finding, db) -> bytes:
+    from io import BytesIO
+    from xml.sax.saxutils import escape
+
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+    from reportlab.lib.units import mm
+    from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
+
+    styles = getSampleStyleSheet()
+    h1 = ParagraphStyle("HFh1", parent=styles["Heading1"], fontSize=16, leading=20, spaceAfter=6)
+    h2 = ParagraphStyle("HFh2", parent=styles["Heading2"], fontSize=11.5, leading=15, spaceBefore=10)
+    body = ParagraphStyle("HFbody", parent=styles["BodyText"], fontSize=9.5, leading=13)
+    verified = finding.validation_status == "verified_human" and finding.status in (
+        "verified",
+        "report_ready",
+        "reported",
+        "resolved",
+    )
+    banner_style = ParagraphStyle(
+        "HFbanner",
+        parent=body,
+        fontSize=9.5,
+        leading=13,
+        textColor=colors.white,
+        backColor=colors.HexColor("#047857") if verified else colors.HexColor("#b45309"),
+        borderPadding=6,
+    )
+    banner_text = (
+        "Verification status: VERIFIED (human-confirmed)"
+        if verified
+        else "Verification status: UNVERIFIED - this finding requires manual verification"
+    )
+
+    def para(text: str | None, style=body) -> Paragraph:
+        return Paragraph(escape(_plain(text)).replace("\n", "<br/>"), style)
+
+    def section(title: str, content: str | None) -> list:
+        return [Paragraph(escape(title), h2), para(content), Spacer(1, 2)]
+
+    story: list = [
+        Paragraph(escape(finding.title), h1),
+        Paragraph(escape(banner_text), banner_style),
+        Spacer(1, 8),
+    ]
+    story += section("Summary", finding.description)
+    meta = (
+        f"Severity: {finding.severity or 'unset'} | Confidence: {finding.confidence or 'unset'} | "
+        f"CWE: {finding.cwe or 'unset'} | Category: {finding.category or 'unset'}"
+    )
+    story += [Paragraph(escape(meta), body), Spacer(1, 2)]
+    story += section("Affected asset / endpoint", _affected(finding, db))
+    story += section("Reproduction steps", finding.reproduction_steps)
+    story += section("Security impact", finding.impact)
+    evidence = _evidence_lines(finding, db)
+    story += [Paragraph("Evidence", h2)]
+    if evidence:
+        for line in evidence:
+            story.append(Paragraph(escape(line.lstrip("- ")), body))
+    else:
+        story.append(Paragraph("_No evidence attached._", body))
+    story += section("Additional notes", finding.source_ref)
+
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        leftMargin=18 * mm,
+        rightMargin=18 * mm,
+        topMargin=16 * mm,
+        bottomMargin=16 * mm,
+        title=finding.title,
+    )
+    doc.build(story)
+    return buffer.getvalue()
+
+
+def generate_pdf(db, finding: Finding, settings: Settings) -> tuple[bytes, Path]:
+    content = render_pdf(finding, db)
+    out_dir = settings.data_dir / "reports"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    path = out_dir / f"{finding.id}-v{TEMPLATE_VERSION}.pdf"
+    path.write_bytes(content)
+    return content, path
+
+
 def generate(db, finding: Finding, fmt: str, settings: Settings) -> tuple[str, Path]:
     renderers = {"markdown": render_markdown, "json": render_json, "html": render_html}
     renderer = renderers[fmt]

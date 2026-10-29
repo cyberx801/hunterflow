@@ -50,3 +50,6 @@
 |---|---|---|---|---|
 | C1 | 2026-10-29 | v0.2 monitoring delivered (schedules, change detection, webhooks, scheduler service) | Owner instruction to add continuous monitoring for server use | Additive; no change to scope enforcement or security model |
 | C2 | 2026-10-29 | v0.2.1 tool expansion: added `dnsx` and `gau` adapters and a `url_discovery` profile | Owner instruction "sıradaki adımları yap" (do the next steps) | Additive adapters behind the same scope-policy gate; DNS and historical URLs stored as assets, not probed automatically |
+
+| C3 | 2026-10-29 | v0.3: PDF reports, optional AI assistant (OpenAI-compatible, disabled by default), team workspace with admin user management | Owner instruction to add AI via API and the remaining roadmap items | Additive; AI has no tool access and is advisory only; users share one workspace (no per-user isolation) |
+

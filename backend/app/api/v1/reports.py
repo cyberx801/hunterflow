@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends
+from fastapi.responses import FileResponse
 from sqlalchemy import select
 
 from ...core.config import Settings, get_settings
@@ -26,7 +27,11 @@ def generate_report(
     finding = db.get(Finding, parse_uuid(body.finding_id))
     if finding is None:
         raise ApiError(ErrorCode.NOT_FOUND, "Finding not found", 404)
-    content, path = reports_service.generate(db, finding, body.format, settings)
+    if body.format == "pdf":
+        _, path = reports_service.generate_pdf(db, finding, settings)
+        content = None
+    else:
+        content, path = reports_service.generate(db, finding, body.format, settings)
     report = Report(
         program_id=finding.program_id,
         finding_id=finding.id,
@@ -58,13 +63,40 @@ def get_report(report_id: str, db=Depends(get_db), user: User = Depends(get_curr
     from pathlib import Path
 
     content = None
-    p = Path(report.content_ref)
-    if p.exists():
-        content = p.read_text(encoding="utf-8")
+    if report.format != "pdf":
+        p = Path(report.content_ref)
+        if p.exists():
+            content = p.read_text(encoding="utf-8")
     return ReportOut(
         id=report.id,
         finding_id=report.finding_id,
         format=report.format,
         generated_at=report.generated_at,
         content=content,
+    )
+
+@router.get("/reports/{report_id}/download")
+def download_report(
+    report_id: str, db=Depends(get_db), user: User = Depends(get_current_user)
+) -> FileResponse:
+    report = db.get(Report, parse_uuid(report_id))
+    if report is None:
+        raise ApiError(ErrorCode.NOT_FOUND, "Report not found", 404)
+    from pathlib import Path
+
+    path = Path(report.content_ref)
+    if not path.exists():
+        raise ApiError(ErrorCode.NOT_FOUND, "Report file missing on disk", 404)
+    mime = {
+        "markdown": "text/markdown",
+        "json": "application/json",
+        "html": "text/html",
+        "pdf": "application/pdf",
+    }.get(report.format, "application/octet-stream")
+    ext = "md" if report.format == "markdown" else report.format
+    return FileResponse(
+        path,
+        media_type=mime,
+        filename=f"hunterflow-{report.finding_id[:8]}.{ext}",
+        content_disposition_type="attachment",
     )

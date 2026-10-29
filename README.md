@@ -35,6 +35,14 @@ before you rely on it.
 - **Continuous monitoring.** Scheduled scans per program with change detection: new assets
   and endpoints, and removals only after two consecutive misses. Optional webhook
   notifications (Discord/Slack), opt-in per schedule.
+- **PDF reports.** Findings export to Markdown, JSON, HTML and PDF, always with the
+  verification banner.
+- **Team workspace.** Multiple accounts sharing one workspace; the first account is the
+  administrator and can create, promote, deactivate and reset users. Optional open
+  registration (`HF_ALLOW_REGISTRATION`).
+- **Optional AI assistant.** Off by default. Works with any OpenAI-compatible endpoint
+  (local Ollama by default), only reads the page you open, has no tool access, and its
+  output is labeled as advisory.
 
 ## Requirements
 
@@ -175,7 +183,7 @@ More detail in [`docs/development.md`](docs/development.md) and
 ## Tests
 
 ```
-backend: 154 passed (unit, integration, security)
+backend: 165 passed (unit, integration, security)
 e2e:     6 passed (Playwright, critical journeys)
 lint:    ruff clean, tsc clean
 ```
@@ -202,17 +210,19 @@ redaction, and evidence isolation. See [`specs/testing-strategy.md`](specs/testi
 - Single user, no teams or roles yet.
 - Removal detection is heuristic (two consecutive misses); treat "removed" as a prompt to
   re-check, not as fact.
-- No continuous proxy capture, no PDF export, no AI features.
+- No continuous proxy capture and no automatic screenshot capture yet.
 - See [`docs/known-issues.md`](docs/known-issues.md) for the current list.
 
 ## Roadmap
 
-- v0.1 â€” research workspace (done).
-- v0.2 â€” monitoring: schedules, change detection, webhook notifications (done).
-- v0.3 â€” optional local AI assistant (Ollama, off by default).
-- v0.4 â€” multi-user collaboration.
+- v0.1 - research workspace (done).
+- v0.2 - monitoring: schedules, change detection, webhook notifications (done).
+- v0.2.1 - dnsx and gau adapters, passive URL discovery profile (done).
+- v0.3 - PDF reports, optional AI assistant, team workspace with admin user management (done).
+- Next - deeper tool coverage, richer change detection, optional screenshot capture.
 
 ## License
 
 MIT. See [`LICENSE`](LICENSE).
+
 

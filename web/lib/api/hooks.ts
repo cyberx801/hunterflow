@@ -293,3 +293,18 @@ export function useMonitoringStatus() {
     queryFn: () => apiFetch<import("./types").MonitoringStatus>("/api/v1/monitoring/status"),
   });
 }
+
+export function useAiStatus() {
+  return useQuery({
+    queryKey: ["ai-status"],
+    queryFn: () => apiFetch<import("./types").AiStatus>("/api/v1/ai/status"),
+  });
+}
+
+export function useUsers(enabled: boolean) {
+  return useQuery({
+    queryKey: ["users"],
+    queryFn: () => apiFetch<import("./types").UserAccount[]>("/api/v1/users"),
+    enabled,
+  });
+}

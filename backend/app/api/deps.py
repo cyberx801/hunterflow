@@ -109,3 +109,9 @@ def parse_uuid(value: str) -> str:
         return str(uuid.UUID(value))
     except ValueError:
         raise ApiError(ErrorCode.VALIDATION, f"Invalid id: {value}") from None
+
+
+def require_admin(user: User = Depends(get_current_user)) -> User:
+    if not user.is_admin:
+        raise ApiError(ErrorCode.FORBIDDEN, "Administrator access required", 403)
+    return user

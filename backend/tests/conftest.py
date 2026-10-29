@@ -33,6 +33,9 @@ def settings(tmp_path) -> Settings:
 @pytest.fixture()
 def app(settings):
     app = create_app(settings)
+    from app.core.config import get_settings
+
+    app.dependency_overrides[get_settings] = lambda: settings
     engine = build_engine(settings)
     Base.metadata.create_all(engine)
     app.state.engine = engine

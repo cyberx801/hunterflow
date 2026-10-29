@@ -99,6 +99,34 @@ Discord and Slack incoming webhooks both work (the payload includes `content` an
 Notifications are opt-in per schedule and are skipped silently if the URL is not set. The
 webhook URL lives only in the environment, not in the database.
 
+## Team workspace
+
+The first account is the administrator. Admins manage users in the UI. To allow
+self-registration, set:
+
+```env
+HF_ALLOW_REGISTRATION=true
+```
+
+All members share the same workspace; there is no per-user isolation.
+
+## Optional AI assistant
+
+Disabled by default. It talks to any OpenAI-compatible endpoint, so a local model is
+enough:
+
+```env
+HF_AI_ENABLED=true
+HF_AI_BASE_URL=http://host.docker.internal:11434/v1   # local Ollama
+HF_AI_MODEL=llama3.1:8b
+HF_AI_API_KEY=                                        # only if your endpoint needs one
+```
+
+The container already resolves `host.docker.internal` (compose adds the host-gateway
+entry). If the endpoint is unreachable the assistant returns an error; the rest of the
+application is unaffected. No paid API is required.
+
+
 ## Troubleshooting
 
 **Image pulls fail with `httpReadSeeker ... EOF` from CloudFront.**

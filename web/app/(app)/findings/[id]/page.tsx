@@ -8,6 +8,7 @@ import { useCsrfToken, useFinding, useFindingDuplicates } from "@/lib/api/hooks"
 import { apiFetch } from "@/lib/api/client";
 import { Badge, Button, Card, CardContent, CardHeader, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Skeleton, Textarea } from "@/components/ui/primitives";
 import { PageHeader, SeverityBadge, StatusBadge, ValidationBadge } from "@/components/domain/shared";
+import { AiAssistCard } from "@/components/domain/ai-assist";
 import { formatTime } from "@/lib/utils";
 import type { Evidence, Finding, Report } from "@/lib/api/types";
 
@@ -72,7 +73,7 @@ export default function FindingDetailPage({ params }: { params: { id: string } }
   });
 
   const generate = useMutation({
-    mutationFn: (format: "markdown" | "json" | "html") =>
+    mutationFn: (format: "markdown" | "json" | "html" | "pdf") =>
       apiFetch<Report>("/api/v1/reports", {
         method: "POST",
         body: JSON.stringify({ finding_id: params.id, format }),
@@ -241,16 +242,25 @@ export default function FindingDetailPage({ params }: { params: { id: string } }
           <Card>
             <CardHeader><h2 className="text-sm font-semibold text-text-primary">Report</h2></CardHeader>
             <CardContent className="space-y-2">
-              <div className="flex gap-2">
-                {(["markdown", "json", "html"] as const).map((f) => (
+              <div className="flex flex-wrap gap-2">
+                {(["markdown", "json", "html", "pdf"] as const).map((f) => (
                   <Button key={f} size="sm" variant="secondary" onClick={() => generate.mutate(f)} disabled={generate.isPending}>
                     <FileText className="h-3.5 w-3.5" /> {f}
                   </Button>
                 ))}
               </div>
               {generate.data && (
-                <a href={`/api/v1/reports/${generate.data.id}`} className="text-xs text-info hover:underline">
-                  View generated {generate.data.format} report
+                <a
+                  href={
+                    generate.data.format === "pdf"
+                      ? `/api/v1/reports/${generate.data.id}/download`
+                      : `/reports/${generate.data.id}`
+                  }
+                  className="text-xs text-info hover:underline"
+                >
+                  {generate.data.format === "pdf"
+                    ? "Download PDF report"
+                    : `View generated ${generate.data.format} report`}
                 </a>
               )}
               <p className="text-xs text-text-muted">
@@ -258,6 +268,8 @@ export default function FindingDetailPage({ params }: { params: { id: string } }
               </p>
             </CardContent>
           </Card>
+
+          <AiAssistCard kind="finding" id={finding.id} />
 
           {duplicates && duplicates.length > 0 && (
             <Card>

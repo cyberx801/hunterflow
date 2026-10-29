@@ -51,8 +51,17 @@ Attach **evidence** (sanitized requests, responses, screenshots) — files are s
 
 ## 6. Report
 
-**Findings → [finding] → Report → markdown/json/html.** Reports always carry the verification banner — unverified findings are labeled as such. Nothing is ever submitted to a bug bounty platform automatically.
+**Findings → [finding] → Report → markdown/json/html/pdf.** Reports always carry the verification banner — unverified findings are labeled as such. PDFs and other formats download through an authenticated endpoint. Nothing is ever submitted to a bug bounty platform automatically.
 
 ## 7. Prioritization
 
 The research board and endpoints are ranked by a **deterministic, explainable score** (new asset, auth-sensitive, untested, scanner observation, …). Each card shows which factors contributed. A high score is a lead, not a claim — and you can tune the weights in **Settings → Prioritization**.
+
+## 8. Team (optional)
+
+The first account is the administrator. Admins can create members, promote or demote them, disable accounts and reset passwords in **Settings → Users**. Everyone shares the same programs and data; there is no per-user isolation yet. To let people self-register, set `HF_ALLOW_REGISTRATION=true`.
+
+## 9. AI assist (optional, off by default)
+
+If `HF_AI_ENABLED=true` and an OpenAI-compatible endpoint is reachable (local Ollama by default), research cards and findings show an **AI assist** panel. It summarizes only the data on that page, cannot scan or verify anything, and its output is labeled advisory. It is never used for authorization decisions or to mark findings verified.
+

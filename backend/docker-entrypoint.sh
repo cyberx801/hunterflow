@@ -3,8 +3,14 @@ set -e
 
 export UV_CACHE_DIR=/tmp/uv-cache
 
-echo "[hunterflow] applying database migrations"
-/venv/bin/alembic upgrade head
+# Only the API applies migrations. Worker/scheduler wait for the API healthcheck
+# (see compose depends_on) so concurrent `alembic upgrade` runs cannot race.
+if [ "$HF_PROCESS" = "worker" ] || [ "$HF_PROCESS" = "scheduler" ]; then
+  echo "[hunterflow] migrations are applied by the api service"
+else
+  echo "[hunterflow] applying database migrations"
+  /venv/bin/alembic upgrade head
+fi
 
 echo "[hunterflow] starting $HF_PROCESS"
 if [ "$HF_PROCESS" = "worker" ]; then

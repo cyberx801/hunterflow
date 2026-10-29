@@ -3,17 +3,42 @@
 import { useState } from "react";
 import { RefreshCw } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAudit, useCsrfToken, useSettings } from "@/lib/api/hooks";
+import { useAudit, useAiStatus, useCsrfToken, useSettings, useUsers } from "@/lib/api/hooks";
+import { useAuthContext } from "@/lib/api/auth-context";
 import { apiFetch } from "@/lib/api/client";
-import { Badge, Button, Card, CardContent, CardHeader, Input, Skeleton, Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/primitives";
+import {
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  Checkbox,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  Input,
+  Label,
+  Skeleton,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/primitives";
 import { PageHeader } from "@/components/domain/shared";
 import { formatTime, timeAgo } from "@/lib/utils";
 
 export default function SettingsPage() {
   const csrf = useCsrfToken();
+  const { me } = useAuthContext();
   const queryClient = useQueryClient();
   const { data: settings, isLoading } = useSettings();
+  const { data: ai } = useAiStatus();
+  const { data: users } = useUsers(!!me?.is_admin);
   const [page, setPage] = useState(1);
+  const [userDialog, setUserDialog] = useState(false);
+  const [newUser, setNewUser] = useState({ username: "", password: "", is_admin: false });
   const { data: audit } = useAudit(page);
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -45,6 +70,26 @@ export default function SettingsPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["settings"] }),
   });
 
+  const createUser = useMutation({
+    mutationFn: () =>
+      apiFetch("/api/v1/users", {
+        method: "POST",
+        body: JSON.stringify(newUser),
+        csrf,
+      }),
+    onSuccess: () => {
+      setUserDialog(false);
+      setNewUser({ username: "", password: "", is_admin: false });
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+    },
+  });
+
+  const updateUser = useMutation({
+    mutationFn: ({ id, patch }: { id: string; patch: Record<string, boolean> }) =>
+      apiFetch(`/api/v1/users/${id}`, { method: "PATCH", body: JSON.stringify(patch), csrf }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["users"] }),
+  });
+
   if (isLoading || !settings) return <Skeleton className="h-64 w-full" />;
 
   const weights = settings.weights ?? {
@@ -67,6 +112,8 @@ export default function SettingsPage() {
           <TabsTrigger value="auth">Authentication</TabsTrigger>
           <TabsTrigger value="storage">Storage</TabsTrigger>
           <TabsTrigger value="prioritization">Prioritization</TabsTrigger>
+          {me?.is_admin && <TabsTrigger value="users">Users</TabsTrigger>}
+          <TabsTrigger value="ai">AI</TabsTrigger>
           <TabsTrigger value="audit">Audit log</TabsTrigger>
         </TabsList>
 
@@ -165,6 +212,130 @@ export default function SettingsPage() {
               <Button className="mt-3" onClick={() => saveWeights.mutate({ ...weights })} disabled={saveWeights.isPending}>
                 Save weights
               </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="users" className="pt-4">
+          <Card>
+            <CardHeader className="flex items-center justify-between">
+              <div>
+                <h2 className="text-sm font-semibold text-text-primary">Team members</h2>
+                <p className="mt-0.5 text-xs text-text-muted">
+                  Shared workspace: every member sees the same programs and data.
+                </p>
+              </div>
+              <Dialog open={userDialog} onOpenChange={setUserDialog}>
+                <DialogTrigger asChild>
+                  <Button size="sm">New user</Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Create user</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-3">
+                    <div className="space-y-1.5">
+                      <Label>Username</Label>
+                      <Input
+                        value={newUser.username}
+                        onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>Password (min 12 chars)</Label>
+                      <Input
+                        type="password"
+                        value={newUser.password}
+                        onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                      />
+                    </div>
+                    <label className="flex cursor-pointer items-center gap-2 text-[13px] text-text-primary">
+                      <Checkbox
+                        checked={newUser.is_admin}
+                        onCheckedChange={(v) => setNewUser({ ...newUser, is_admin: !!v })}
+                      />
+                      Administrator
+                    </label>
+                    {createUser.error && <p className="text-xs text-danger">{createUser.error.message}</p>}
+                    <div className="flex justify-end gap-2">
+                      <Button variant="ghost" onClick={() => setUserDialog(false)}>
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={() => createUser.mutate()}
+                        disabled={createUser.isPending || !newUser.username || newUser.password.length < 12}
+                      >
+                        Create user
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </CardHeader>
+            <CardContent className="space-y-1.5">
+              {updateUser.error && <p className="text-xs text-danger">{updateUser.error.message}</p>}
+              {(users ?? []).map((u) => (
+                <div
+                  key={u.id}
+                  className="flex items-center justify-between gap-3 rounded border border-border bg-app px-3 py-2"
+                >
+                  <div className="flex min-w-0 items-center gap-2">
+                    <span className="text-[13px] font-medium text-text-primary">{u.username}</span>
+                    {u.id === me?.id && <Badge tone="accent">you</Badge>}
+                    <Badge tone={u.is_admin ? "info" : "muted"}>{u.is_admin ? "admin" : "member"}</Badge>
+                    <Badge tone={u.is_active ? "success" : "muted"}>{u.is_active ? "active" : "disabled"}</Badge>
+                  </div>
+                  <div className="flex shrink-0 gap-1">
+                    {u.id !== me?.id && (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => updateUser.mutate({ id: u.id, patch: { is_admin: !u.is_admin } })}
+                        >
+                          {u.is_admin ? "Demote" : "Promote"}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => updateUser.mutate({ id: u.id, patch: { is_active: !u.is_active } })}
+                        >
+                          {u.is_active ? "Disable" : "Enable"}
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ))}
+              {!users && <Skeleton className="h-12 w-full" />}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="ai" className="pt-4">
+          <Card>
+            <CardHeader>
+              <h2 className="text-sm font-semibold text-text-primary">AI assistant (optional)</h2>
+            </CardHeader>
+            <CardContent className="space-y-2 text-[13px]">
+              <p className="flex items-center gap-2 text-text-secondary">
+                Status: <Badge tone={ai?.enabled ? "success" : "muted"}>{ai?.enabled ? "enabled" : "disabled"}</Badge>
+              </p>
+              <p className="text-text-secondary">
+                Model: <span className="mono text-text-primary">{ai?.model}</span>
+              </p>
+              <p className="text-text-secondary">
+                Endpoint: <span className="text-text-primary">{ai?.endpoint_configured ? "configured" : "not set"}</span>
+              </p>
+              <p className="text-text-secondary">
+                API key: <span className="text-text-primary">{ai?.api_key_configured ? "set" : "not set"}</span>
+              </p>
+              <p className="pt-2 text-xs text-text-muted">
+                Configured by environment only: HF_AI_ENABLED=true, HF_AI_BASE_URL (any
+                OpenAI-compatible endpoint; local Ollama is the default), HF_AI_MODEL,
+                HF_AI_API_KEY. The assistant only reads the workspace data on the page you
+                open, has no tool access, and its output is advisory — never a finding.
+              </p>
             </CardContent>
           </Card>
         </TabsContent>

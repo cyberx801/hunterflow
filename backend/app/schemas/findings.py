@@ -68,7 +68,7 @@ class FindingLinkCreate(BaseModel):
 
 class ReportCreate(BaseModel):
     finding_id: str
-    format: str = Field(pattern=r"^(markdown|json|html)$")
+    format: str = Field(pattern=r"^(markdown|json|html|pdf)$")
 
 
 class ReportOut(BaseModel):

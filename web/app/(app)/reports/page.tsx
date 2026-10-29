@@ -38,9 +38,17 @@ export default function ReportsPage() {
                   <p className="mt-0.5 text-xs text-text-muted">generated {formatTime(r.generated_at)}</p>
                 </div>
                 <div className="flex shrink-0 gap-2">
-                  <Button size="sm" variant="secondary" onClick={() => router.push(`/reports/${r.id}`)}>
-                    Preview
-                  </Button>
+                  {r.format !== "pdf" && (
+                    <Button size="sm" variant="secondary" onClick={() => router.push(`/reports/${r.id}`)}>
+                      Preview
+                    </Button>
+                  )}
+                  <a
+                    href={`/api/v1/reports/${r.id}/download`}
+                    className="inline-flex h-8 items-center rounded-md border border-border px-3 text-[13px] text-text-primary hover:bg-raised"
+                  >
+                    Download
+                  </a>
                   <Button size="sm" variant="secondary" onClick={() => router.push(`/findings/${r.finding_id}`)}>
                     Open finding
                   </Button>

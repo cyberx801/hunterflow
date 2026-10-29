@@ -53,6 +53,7 @@ class User(Base, TimestampMixin):
     username: Mapped[str] = mapped_column(String(64), unique=True, nullable=False, index=True)
     password_hash: Mapped[str] = mapped_column(String(256), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    is_admin: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     sessions: Mapped[list[Session]] = relationship(back_populates="user")
 
@@ -609,7 +610,7 @@ class Report(Base, TimestampMixin):
     id: Mapped[str] = mapped_column(GUID, primary_key=True, default=new_uuid)
     program_id: Mapped[str] = mapped_column(GUID, ForeignKey("programs.id"), nullable=False, index=True)
     finding_id: Mapped[str | None] = mapped_column(GUID, ForeignKey("findings.id"), nullable=True)
-    format: Mapped[str] = mapped_column(SAEnum("markdown", "json", "html", name="report_format"), nullable=False)
+    format: Mapped[str] = mapped_column(String(16), nullable=False)
     template_version: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
     content_ref: Mapped[str] = mapped_column(String(1024), nullable=False)
     generated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)

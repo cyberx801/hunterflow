@@ -77,15 +77,16 @@ def _user_payload(user: User, session: Session) -> dict:
     return {
         "id": user.id,
         "username": user.username,
+        "is_admin": user.is_admin,
         "csrf_token": csrf_token_for(session.csrf_secret),
         "expires_at": session.expires_at.isoformat(),
     }
 
 
 @router.get("/bootstrap")
-def bootstrap_status(db=Depends(get_db)) -> dict:
+def bootstrap_status(db=Depends(get_db), settings: Settings = Depends(get_settings)) -> dict:
     user_count = db.scalar(select(func.count()).select_from(User)) or 0
-    return {"setup_required": user_count == 0}
+    return {"setup_required": user_count == 0, "allow_registration": settings.allow_registration}
 
 
 @router.post("/register")
@@ -97,12 +98,16 @@ def register(
     settings: Settings = Depends(get_settings),
 ):
     user_count = db.scalar(select(func.count()).select_from(User)) or 0
-    if user_count > 0:
-        raise ApiError(ErrorCode.FORBIDDEN, "Registration disabled: an account already exists", 403)
-    if settings.bootstrap_username and settings.bootstrap_password:
+    if user_count > 0 and not settings.allow_registration:
+        raise ApiError(ErrorCode.FORBIDDEN, "Registration disabled", 403)
+    if user_count == 0 and settings.bootstrap_username and settings.bootstrap_password:
         # Bootstrap account takes precedence; registration is locked.
         raise ApiError(ErrorCode.FORBIDDEN, "Registration disabled", 403)
-    user = User(username=body.username, password_hash=hash_password(body.password))
+    user = User(
+        username=body.username,
+        password_hash=hash_password(body.password),
+        is_admin=(user_count == 0),
+    )
     db.add(user)
     db.flush()
     session = _issue_session(db, user, settings, response)

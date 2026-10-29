@@ -46,6 +46,13 @@ services:
       HF_WEBHOOK_URL: ${HF_WEBHOOK_URL:-}
       HF_SCHEDULER_INTERVAL_SECONDS: ${HF_SCHEDULER_INTERVAL_SECONDS:-45}
       HF_MIN_SCHEDULE_MINUTES: ${HF_MIN_SCHEDULE_MINUTES:-15}
+      HF_ALLOW_REGISTRATION: ${HF_ALLOW_REGISTRATION:-false}
+      HF_AI_ENABLED: ${HF_AI_ENABLED:-false}
+      HF_AI_BASE_URL: ${HF_AI_BASE_URL:-http://host.docker.internal:11434/v1}
+      HF_AI_MODEL: ${HF_AI_MODEL:-llama3.1:8b}
+      HF_AI_API_KEY: ${HF_AI_API_KEY:-}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - evidence:/srv/hunterflow/data
     networks: [internal]
@@ -75,6 +82,8 @@ services:
       - evidence:/srv/hunterflow/data
     networks: [internal]
     depends_on:
+      api:
+        condition: service_healthy
       db:
         condition: service_healthy
       redis:
@@ -98,6 +107,8 @@ services:
       - evidence:/srv/hunterflow/data
     networks: [internal]
     depends_on:
+      api:
+        condition: service_healthy
       db:
         condition: service_healthy
       redis:

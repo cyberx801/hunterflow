@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select
 
 from .api.v1 import (
+    ai,
     assets,
     auth,
     endpoints,
@@ -24,6 +25,7 @@ from .api.v1 import (
     scans,
     scopes,
     traffic,
+    users,
 )
 from .core.config import Settings, get_settings
 from .core.errors import install_exception_handlers
@@ -47,6 +49,7 @@ def _create_bootstrap_user(settings: Settings, factory) -> None:
                 User(
                     username=settings.bootstrap_username,
                     password_hash=hash_password(settings.bootstrap_password),
+                    is_admin=True,
                 )
             )
             db.commit()
@@ -76,7 +79,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     app = FastAPI(
         title="HunterFlow API",
-        version="0.2.1",
+        version="0.3.0",
         docs_url=None if settings.is_production else "/docs",
         openapi_url=None if settings.is_production else "/openapi.json",
         lifespan=lifespan,
@@ -118,7 +121,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(reports.router, prefix="/api/v1")
     app.include_router(platform.router, prefix="/api/v1")
     app.include_router(monitoring.router, prefix="/api/v1")
+    app.include_router(users.router, prefix="/api/v1")
+    app.include_router(ai.router, prefix="/api/v1")
     return app
 
 
 app = create_app()
+

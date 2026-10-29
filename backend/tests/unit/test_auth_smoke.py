@@ -31,13 +31,13 @@ def test_error_envelope(client):
 
 def test_bootstrap_status(client):
     resp = client.get("/api/v1/auth/bootstrap")
-    assert resp.json() == {"setup_required": True}
+    assert resp.json()["setup_required"] is True
 
 
 def test_register_then_bootstrap_status(client):
     register_user(client)
     resp = client.get("/api/v1/auth/bootstrap")
-    assert resp.json() == {"setup_required": False}
+    assert resp.json()["setup_required"] is False
 
 
 def test_second_registration_rejected(client):
@@ -74,3 +74,4 @@ def test_csrf_required_on_logout(client):
     resp = client.post("/api/v1/auth/logout")
     assert resp.status_code == 403
     assert resp.json()["error"]["code"] == "FORBIDDEN"
+
