@@ -27,22 +27,15 @@ def get_correlation_id() -> str | None:
     return correlation_id_var.get()
 
 
-def _add_correlation_id(
-    logger: logging.Logger, method_name: str, event_dict: dict
-) -> dict:
+def _add_correlation_id(logger: logging.Logger, method_name: str, event_dict: dict) -> dict:
     cid = correlation_id_var.get()
     if cid:
         event_dict["correlation_id"] = cid
     return event_dict
 
 
-def _redact_processor(
-    logger: logging.Logger, method_name: str, event_dict: dict
-) -> dict:
-    return {
-        k: redact_text(v) if isinstance(v, str) else v
-        for k, v in event_dict.items()
-    }
+def _redact_processor(logger: logging.Logger, method_name: str, event_dict: dict) -> dict:
+    return {k: redact_text(v) if isinstance(v, str) else v for k, v in event_dict.items()}
 
 
 def configure_logging(settings: Settings) -> None:
@@ -65,9 +58,7 @@ def configure_logging(settings: Settings) -> None:
             cache_logger_on_first_use=True,
         )
         handler = logging.StreamHandler(sys.stdout)
-        formatter = structlog.stdlib.ProcessorFormatter(
-            processor=renderer, foreign_pre_chain=shared_processors
-        )
+        formatter = structlog.stdlib.ProcessorFormatter(processor=renderer, foreign_pre_chain=shared_processors)
         handler.setFormatter(formatter)
         root = logging.getLogger()
         root.handlers = [handler]

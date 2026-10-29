@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import hashlib
 import mimetypes
-import shutil
 import uuid
 from pathlib import Path
 
@@ -13,10 +12,10 @@ from fastapi import APIRouter, Depends, File, Request, UploadFile
 from fastapi.responses import FileResponse
 from sqlalchemy import select
 
-from ...core.config import Settings, get_settings
 from ...core.audit import AuditService
+from ...core.config import Settings, get_settings
 from ...core.errors import ApiError, ErrorCode
-from ...db.models import EvidenceFile, EvidenceLink, Finding, ResearchCard, User
+from ...db.models import EvidenceFile, EvidenceLink, User
 from ...schemas.findings import EvidenceOut
 from ..deps import get_current_user, get_db, parse_uuid, require_csrf
 
@@ -58,9 +57,7 @@ def upload_evidence(
     max_bytes = settings.evidence_max_mb * 1024 * 1024
     data = file.file.read(max_bytes + 1)
     if len(data) > max_bytes:
-        raise ApiError(
-            ErrorCode.UPLOAD_REJECTED, f"File exceeds {settings.evidence_max_mb} MB limit"
-        )
+        raise ApiError(ErrorCode.UPLOAD_REJECTED, f"File exceeds {settings.evidence_max_mb} MB limit")
     magic = _magic_ext(data[:16])
     if magic is not None and magic != ext:
         raise ApiError(ErrorCode.UPLOAD_REJECTED, "File content does not match extension")
@@ -95,8 +92,12 @@ def upload_evidence(
         )
         db.add(link)
     AuditService.record(
-        db, "evidence.uploaded", "evidence", record.id,
-        after={"filename": filename, "size": len(data), "sha256": sha}, actor_id=user.id,
+        db,
+        "evidence.uploaded",
+        "evidence",
+        record.id,
+        after={"filename": filename, "size": len(data), "sha256": sha},
+        actor_id=user.id,
     )
     db.commit()
     return EvidenceOut(
@@ -125,22 +126,30 @@ def list_evidence(
     rows = db.scalars(stmt).all()
     out = [
         EvidenceOut(
-            id=e.id, program_id=e.program_id, filename=e.filename, sha256=e.sha256,
-            size=e.size, mime=e.mime, redacted=e.redacted, created_at=e.created_at,
+            id=e.id,
+            program_id=e.program_id,
+            filename=e.filename,
+            sha256=e.sha256,
+            size=e.size,
+            mime=e.mime,
+            redacted=e.redacted,
+            created_at=e.created_at,
         )
         for e in rows
     ]
     if finding_id or card_id:
-        linked = db.scalars(
-            select(EvidenceLink).where(
-                EvidenceLink.finding_id == (parse_uuid(finding_id) if finding_id else None),
-            )
-        ).all() if finding_id else []
-        if card_id:
-            linked = db.scalars(
-                select(EvidenceLink).where(EvidenceLink.card_id == parse_uuid(card_id))
+        linked = (
+            db.scalars(
+                select(EvidenceLink).where(
+                    EvidenceLink.finding_id == (parse_uuid(finding_id) if finding_id else None),
+                )
             ).all()
-        ids = {l.evidence_id for l in linked}
+            if finding_id
+            else []
+        )
+        if card_id:
+            linked = db.scalars(select(EvidenceLink).where(EvidenceLink.card_id == parse_uuid(card_id))).all()
+        ids = {link.evidence_id for link in linked}
         out = [e for e in out if e.id in ids]
     return out
 
@@ -163,9 +172,7 @@ def download_evidence(
         raise ApiError(ErrorCode.INTERNAL, "Evidence integrity check failed", 500)
     AuditService.record(db, "evidence.downloaded", "evidence", record.id, actor_id=user.id)
     db.commit()
-    return FileResponse(
-        path, media_type=record.mime, filename=record.filename, content_disposition_type="attachment"
-    )
+    return FileResponse(path, media_type=record.mime, filename=record.filename, content_disposition_type="attachment")
 
 
 @router.post("/evidence/{evidence_id}/links")

@@ -17,9 +17,9 @@ Matching semantics (HF-FR-005/007, security.md):
 from __future__ import annotations
 
 import ipaddress
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Iterable
 from urllib.parse import urlsplit
 
 
@@ -67,7 +67,7 @@ class Decision:
 class Policy:
     rules: list[Rule] = field(default_factory=list)
 
-    def with_rules(self, rules: Iterable[Rule]) -> "Policy":
+    def with_rules(self, rules: Iterable[Rule]) -> Policy:
         return Policy(list(rules))
 
     # -- matching primitives -------------------------------------------------
@@ -170,9 +170,7 @@ class Policy:
             elif rule.kind == RuleKind.AUTOMATION:
                 restrictions.append(rule)  # value: allowed|denied|confirm
 
-        automation_rule = next(
-            (r for r in restrictions if r.kind == RuleKind.AUTOMATION), None
-        )
+        automation_rule = next((r for r in restrictions if r.kind == RuleKind.AUTOMATION), None)
         if automation_rule is not None:
             val = automation_rule.value.lower()
             if automation and val == "denied":
@@ -248,7 +246,7 @@ class Policy:
         }
 
     @classmethod
-    def from_snapshot(cls, snapshot: dict) -> "Policy":
+    def from_snapshot(cls, snapshot: dict) -> Policy:
         return cls(
             [
                 Rule(
@@ -263,7 +261,7 @@ class Policy:
         )
 
     @classmethod
-    def from_db_rules(cls, rows: Iterable) -> "Policy":
+    def from_db_rules(cls, rows: Iterable) -> Policy:
         return cls(
             [
                 Rule(

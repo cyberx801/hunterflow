@@ -35,9 +35,7 @@ def new_session_token() -> tuple[str, str]:
 
 
 def csrf_token_for(csrf_secret: str) -> str:
-    return hmac.new(
-        csrf_secret.encode(), b"hunterflow-csrf", hashlib.sha256
-    ).hexdigest()
+    return hmac.new(csrf_secret.encode(), b"hunterflow-csrf", hashlib.sha256).hexdigest()
 
 
 def verify_csrf_token(csrf_secret: str, presented: str) -> bool:

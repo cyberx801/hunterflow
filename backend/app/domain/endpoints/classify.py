@@ -22,7 +22,12 @@ CATEGORIES = [
 ]
 
 _SEGMENT_RULES: list[tuple[re.Pattern[str], str]] = [
-    (re.compile(r"(^|/)(login|signin|sign-in|sign_in|logout|signout|sign-up|signup|register|auth|oauth|token|session)(/|$)"), "auth"),
+    (
+        re.compile(
+            r"(^|/)(login|signin|sign-in|sign_in|logout|signout|sign-up|signup|register|auth|oauth|token|session)(/|$)"
+        ),
+        "auth",
+    ),
     (re.compile(r"(^|/)(admin|administrator|manage|console|internal|dashboard)(/|$)"), "admin"),
     (re.compile(r"(^|/)(account|settings|preferences|profile|user|me)(/|$)"), "account"),
     (re.compile(r"(^|/)(upload|download|file|files|image|images|attachment|static|media|export|import)(/|$)"), "file"),
@@ -30,15 +35,15 @@ _SEGMENT_RULES: list[tuple[re.Pattern[str], str]] = [
     (re.compile(r"(^|/)(api/v\d+|v\d+|graphql|swagger|openapi)(/|$)"), "api_versioning"),
 ]
 
-_OBJECT_ACCESS = re.compile(r"/(?:users?|orders?|items?|invoices?|documents?|projects?|organizations?|customers?|tickets?)/[^/?#]+/?$")
+_OBJECT_ACCESS = re.compile(
+    r"/(?:users?|orders?|items?|invoices?|documents?|projects?|organizations?|customers?|tickets?)/[^/?#]+/?$"
+)
 
 
 def _has_identifier_segment(path: str) -> bool:
     """A trailing dynamic identifier segment suggests object-level access."""
     tail = path.rstrip("/").split("/")[-1]
-    return bool(re.fullmatch(r"[0-9]+", tail)) or (
-        len(tail) > 16 and not tail.startswith(".")
-    )
+    return bool(re.fullmatch(r"[0-9]+", tail)) or (len(tail) > 16 and not tail.startswith("."))
 
 
 @dataclass(frozen=True)

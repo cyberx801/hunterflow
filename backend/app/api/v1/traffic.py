@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import shutil
 import uuid
-from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, Request, UploadFile
 from sqlalchemy import select
@@ -60,9 +59,7 @@ def import_har(
     if target.stat().st_size > 50 * 1024 * 1024:
         target.unlink(missing_ok=True)
         raise ApiError(ErrorCode.UPLOAD_REJECTED, "HAR file too large (max 50 MB)")
-    job = ImportJob(
-        program_id=pid, kind="har", file_ref=str(target), account_tag=account_tag
-    )
+    job = ImportJob(program_id=pid, kind="har", file_ref=str(target), account_tag=account_tag)
     db.add(job)
     db.commit()
     enqueue_import(job.id)
@@ -142,9 +139,7 @@ def list_transactions(
 
 
 @router.get("/traffic/transactions/{tx_id}")
-def get_transaction(
-    tx_id: str, db=Depends(get_db), user: User = Depends(get_current_user)
-) -> dict:
+def get_transaction(tx_id: str, db=Depends(get_db), user: User = Depends(get_current_user)) -> dict:
     tx = db.get(HttpTransaction, parse_uuid(tx_id))
     if tx is None:
         raise ApiError(ErrorCode.NOT_FOUND, "Transaction not found", 404)
@@ -193,7 +188,10 @@ def create_comparison(
         db.add(ComparisonMember(set_id=cs.id, transaction_id=tid, position=position))
     db.commit()
     return ComparisonOut(
-        id=cs.id, program_id=cs.program_id, name=cs.name, created_at=cs.created_at,
+        id=cs.id,
+        program_id=cs.program_id,
+        name=cs.name,
+        created_at=cs.created_at,
         member_count=len(ids),
     )
 
@@ -210,22 +208,24 @@ def list_comparisons(
     sets = db.scalars(stmt).all()
     out = []
     for cs in sets:
-        count = db.scalar(
-            select(__import__("sqlalchemy").func.count())
-            .select_from(ComparisonMember)
-            .where(ComparisonMember.set_id == cs.id)
-        ) or 0
+        count = (
+            db.scalar(
+                select(__import__("sqlalchemy").func.count())
+                .select_from(ComparisonMember)
+                .where(ComparisonMember.set_id == cs.id)
+            )
+            or 0
+        )
         out.append(
-            ComparisonOut(id=cs.id, program_id=cs.program_id, name=cs.name,
-                          created_at=cs.created_at, member_count=count)
+            ComparisonOut(
+                id=cs.id, program_id=cs.program_id, name=cs.name, created_at=cs.created_at, member_count=count
+            )
         )
     return out
 
 
 @router.get("/comparisons/{set_id}")
-def get_comparison(
-    set_id: str, db=Depends(get_db), user: User = Depends(get_current_user)
-) -> dict:
+def get_comparison(set_id: str, db=Depends(get_db), user: User = Depends(get_current_user)) -> dict:
     cs = db.get(ComparisonSet, parse_uuid(set_id))
     if cs is None:
         raise ApiError(ErrorCode.NOT_FOUND, "Comparison not found", 404)
@@ -280,11 +280,11 @@ def delete_comparison(
 
 
 @router.get("/normalization-profiles")
-def list_normalization_profiles(db=Depends(get_db), user: User = Depends(get_current_user)) -> list[NormalizationProfileOut]:
+def list_normalization_profiles(
+    db=Depends(get_db), user: User = Depends(get_current_user)
+) -> list[NormalizationProfileOut]:
     rows = db.scalars(select(NormalizationProfile).order_by(NormalizationProfile.created_at)).all()
     return [
-        NormalizationProfileOut(
-            id=p.id, name=p.name, ignore_headers=p.ignore_headers, dynamic_rules=p.dynamic_rules
-        )
+        NormalizationProfileOut(id=p.id, name=p.name, ignore_headers=p.ignore_headers, dynamic_rules=p.dynamic_rules)
         for p in rows
     ]

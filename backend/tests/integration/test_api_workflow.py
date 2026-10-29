@@ -5,7 +5,6 @@ from __future__ import annotations
 import hashlib
 import io
 import json
-from pathlib import Path
 
 from tests.helpers import csrf_headers, register_user
 
@@ -52,7 +51,8 @@ class TestResearchWorkflow:
 
         # Legal transition
         r = client.post(
-            f"/api/v1/research/{card['id']}/transition", json={"to": "in_progress"},
+            f"/api/v1/research/{card['id']}/transition",
+            json={"to": "in_progress"},
             headers=csrf_headers(csrf),
         )
         assert r.status_code == 200
@@ -60,7 +60,8 @@ class TestResearchWorkflow:
 
         # Illegal transition rejected
         r = client.post(
-            f"/api/v1/research/{card['id']}/transition", json={"to": "reported"},
+            f"/api/v1/research/{card['id']}/transition",
+            json={"to": "reported"},
             headers=csrf_headers(csrf),
         )
         assert r.status_code == 400
@@ -145,7 +146,6 @@ class TestHarImport:
             headers={"X-CSRF-Token": csrf},
         )
         assert r.status_code == 202, r.text
-        import_job_id = r.json()["import_job_id"]
 
         imports = client.get(f"/api/v1/traffic/imports?program_id={pid}").json()
         assert imports[0]["status"] == "completed"
@@ -245,12 +245,10 @@ class TestComparison:
         csrf = me["csrf_token"]
         pid = _program(client, csrf)["id"]
         txs = []
-        for i, (account, body) in enumerate(
-            [
-                ("a", '{"id": 1, "created": "2026-10-29T10:00:00Z", "uuid": "123e4567-e89b-12d3-a456-426614174000"}'),
-                ("b", '{"id": 1, "created": "2026-10-30T11:11:11Z", "uuid": "999e4567-e89b-12d3-a456-426614174999"}'),
-            ]
-        ):
+        for account, body in [
+            ("a", '{"id": 1, "created": "2026-10-29T10:00:00Z", "uuid": "123e4567-e89b-12d3-a456-426614174000"}'),
+            ("b", '{"id": 1, "created": "2026-10-30T11:11:11Z", "uuid": "999e4567-e89b-12d3-a456-426614174999"}'),
+        ]:
             r = client.post(
                 "/api/v1/traffic/transactions",
                 json={
@@ -331,7 +329,12 @@ class TestFindingsHonesty:
         policy = Policy.from_db_rules(program.scope_rules)
         obs = Observation(
             kind="scanner_finding",
-            payload={"template_id": "http/misconfiguration/cors/cors-allow-all.yaml", "name": "CORS Allow All", "severity": "low", "matched_at": "https://api.example.com/x"},
+            payload={
+                "template_id": "http/misconfiguration/cors/cors-allow-all.yaml",
+                "name": "CORS Allow All",
+                "severity": "low",
+                "matched_at": "https://api.example.com/x",
+            },
             source="nuclei",
         )
         ingest(db, program, obs, policy, tool_run_id=None)

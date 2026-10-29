@@ -7,8 +7,7 @@ from sqlalchemy import select
 
 from ...core.audit import AuditService
 from ...core.errors import ApiError, ErrorCode
-from ...db.models import Asset, PolicyVersion, Program, ScopeRule, User
-from ...domain.scope import Policy
+from ...db.models import PolicyVersion, ScopeRule, User
 from ...schemas.programs import (
     PolicyVersionDetail,
     PolicyVersionOut,
@@ -25,19 +24,19 @@ router = APIRouter(tags=["scope"])
 
 def _rule_out(rule: ScopeRule) -> ScopeRuleOut:
     return ScopeRuleOut(
-        id=rule.id, kind=rule.kind, value=rule.value, effect=rule.effect,
-        priority=rule.priority, notes=rule.notes,
+        id=rule.id,
+        kind=rule.kind,
+        value=rule.value,
+        effect=rule.effect,
+        priority=rule.priority,
+        notes=rule.notes,
     )
 
 
 @router.get("/programs/{program_id}/scope")
-def list_rules(
-    program_id: str, db=Depends(get_db), user: User = Depends(get_current_user)
-) -> list[ScopeRuleOut]:
+def list_rules(program_id: str, db=Depends(get_db), user: User = Depends(get_current_user)) -> list[ScopeRuleOut]:
     program = programs_service.get_program(db, parse_uuid(program_id))
-    rules = db.scalars(
-        select(ScopeRule).where(ScopeRule.program_id == program.id).order_by(ScopeRule.priority)
-    ).all()
+    rules = db.scalars(select(ScopeRule).where(ScopeRule.program_id == program.id).order_by(ScopeRule.priority)).all()
     return [_rule_out(r) for r in rules]
 
 
@@ -63,9 +62,13 @@ def add_rule(
     db.add(rule)
     db.flush()
     AuditService.record(
-        db, "scope.rule_added", "scope_rule", rule.id,
+        db,
+        "scope.rule_added",
+        "scope_rule",
+        rule.id,
         after={"kind": rule.kind, "value": rule.value, "effect": rule.effect},
-        actor_id=user.id, ip=request.client.host if request.client else None,
+        actor_id=user.id,
+        ip=request.client.host if request.client else None,
     )
     db.commit()
     return _rule_out(rule)
@@ -92,9 +95,13 @@ def update_rule(
     rule.priority = body.priority
     rule.notes = body.notes
     AuditService.record(
-        db, "scope.rule_updated", "scope_rule", rule.id,
+        db,
+        "scope.rule_updated",
+        "scope_rule",
+        rule.id,
         after={"kind": rule.kind, "value": rule.value, "effect": rule.effect},
-        actor_id=user.id, ip=request.client.host if request.client else None,
+        actor_id=user.id,
+        ip=request.client.host if request.client else None,
     )
     db.commit()
     return _rule_out(rule)
@@ -115,9 +122,13 @@ def delete_rule(
         raise ApiError(ErrorCode.NOT_FOUND, "Rule not found", 404)
     db.delete(rule)
     AuditService.record(
-        db, "scope.rule_deleted", "scope_rule", rule.id,
+        db,
+        "scope.rule_deleted",
+        "scope_rule",
+        rule.id,
         before={"kind": rule.kind, "value": rule.value},
-        actor_id=user.id, ip=request.client.host if request.client else None,
+        actor_id=user.id,
+        ip=request.client.host if request.client else None,
     )
     db.commit()
     return {"status": "ok"}
@@ -158,13 +169,19 @@ def publish_version(
 ) -> PolicyVersionOut:
     program = programs_service.get_program(db, parse_uuid(program_id))
     pv = programs_service.publish_policy_version(
-        db, program, (body or {}).get("change_summary") or "",
-        actor_id=user.id, ip=request.client.host if request.client else None,
+        db,
+        program,
+        (body or {}).get("change_summary") or "",
+        actor_id=user.id,
+        ip=request.client.host if request.client else None,
     )
     db.commit()
     return PolicyVersionOut(
-        id=pv.id, version=pv.version, change_summary=pv.change_summary,
-        created_at=pv.created_at, rule_count=len(pv.snapshot.get("rules", [])),
+        id=pv.id,
+        version=pv.version,
+        change_summary=pv.change_summary,
+        created_at=pv.created_at,
+        rule_count=len(pv.snapshot.get("rules", [])),
     )
 
 
@@ -174,14 +191,15 @@ def list_versions(
 ) -> list[PolicyVersionOut]:
     program = programs_service.get_program(db, parse_uuid(program_id))
     rows = db.scalars(
-        select(PolicyVersion)
-        .where(PolicyVersion.program_id == program.id)
-        .order_by(PolicyVersion.version.desc())
+        select(PolicyVersion).where(PolicyVersion.program_id == program.id).order_by(PolicyVersion.version.desc())
     ).all()
     return [
         PolicyVersionOut(
-            id=pv.id, version=pv.version, change_summary=pv.change_summary,
-            created_at=pv.created_at, rule_count=len(pv.snapshot.get("rules", [])),
+            id=pv.id,
+            version=pv.version,
+            change_summary=pv.change_summary,
+            created_at=pv.created_at,
+            rule_count=len(pv.snapshot.get("rules", [])),
         )
         for pv in rows
     ]
@@ -196,22 +214,38 @@ def get_version(
 ) -> PolicyVersionDetail:
     program = programs_service.get_program(db, parse_uuid(program_id))
     pv = db.scalar(
-        select(PolicyVersion).where(
-            PolicyVersion.program_id == program.id, PolicyVersion.version == version
-        )
+        select(PolicyVersion).where(PolicyVersion.program_id == program.id, PolicyVersion.version == version)
     )
     if pv is None:
         raise ApiError(ErrorCode.NOT_FOUND, "Policy version not found", 404)
     prev = db.scalar(
-        select(PolicyVersion)
-        .where(PolicyVersion.program_id == program.id, PolicyVersion.version == version - 1)
+        select(PolicyVersion).where(PolicyVersion.program_id == program.id, PolicyVersion.version == version - 1)
     )
     return PolicyVersionDetail(
-        id=pv.id, version=pv.version, change_summary=pv.change_summary,
-        created_at=pv.created_at, rule_count=len(pv.snapshot.get("rules", [])),
-        rules=[ScopeRuleOut(id="", kind=r["kind"], value=r["value"], effect=r["effect"], priority=r["priority"], notes=r.get("note")) for r in pv.snapshot.get("rules", [])],
+        id=pv.id,
+        version=pv.version,
+        change_summary=pv.change_summary,
+        created_at=pv.created_at,
+        rule_count=len(pv.snapshot.get("rules", [])),
+        rules=[
+            ScopeRuleOut(
+                id="", kind=r["kind"], value=r["value"], effect=r["effect"], priority=r["priority"], notes=r.get("note")
+            )
+            for r in pv.snapshot.get("rules", [])
+        ],
         previous_rules=(
-            [ScopeRuleOut(id="", kind=r["kind"], value=r["value"], effect=r["effect"], priority=r["priority"], notes=r.get("note")) for r in prev.snapshot.get("rules", [])]
-            if prev else None
+            [
+                ScopeRuleOut(
+                    id="",
+                    kind=r["kind"],
+                    value=r["value"],
+                    effect=r["effect"],
+                    priority=r["priority"],
+                    notes=r.get("note"),
+                )
+                for r in prev.snapshot.get("rules", [])
+            ]
+            if prev
+            else None
         ),
     )

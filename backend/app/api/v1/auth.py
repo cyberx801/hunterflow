@@ -6,7 +6,7 @@ Session cookie: HttpOnly, SameSite=Lax, Secure in production (HF-SEC-002).
 from __future__ import annotations
 
 import secrets
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, Request, Response
 from pydantic import BaseModel, Field
@@ -57,7 +57,7 @@ def _issue_session(db, user: User, settings: Settings, response: Response) -> Se
         user_id=user.id,
         token_hash=token_hash,
         csrf_secret=csrf_secret,
-        expires_at=datetime.now(timezone.utc) + timedelta(days=settings.session_ttl_days),
+        expires_at=datetime.now(UTC) + timedelta(days=settings.session_ttl_days),
     )
     db.add(session)
     db.flush()
@@ -138,7 +138,7 @@ def logout(
     _: None = Depends(require_csrf),
 ):
     session = request.state.session
-    session.revoked_at = datetime.now(timezone.utc)
+    session.revoked_at = datetime.now(UTC)
     db.commit()
     response.delete_cookie(SESSION_COOKIE, path="/")
     return {"status": "ok"}
@@ -150,13 +150,9 @@ def me(request: Request, user: User = Depends(get_current_user)) -> dict:
 
 
 @router.get("/sessions")
-def list_sessions(
-    request: Request, db=Depends(get_db), user: User = Depends(get_current_user)
-) -> dict:
-    now = datetime.now(timezone.utc)
-    rows = db.scalars(
-        select(Session).where(Session.user_id == user.id).order_by(Session.created_at.desc())
-    ).all()
+def list_sessions(request: Request, db=Depends(get_db), user: User = Depends(get_current_user)) -> dict:
+    now = datetime.now(UTC)
+    rows = db.scalars(select(Session).where(Session.user_id == user.id).order_by(Session.created_at.desc())).all()
     current_id = request.state.session.id
     return {
         "items": [
@@ -183,7 +179,7 @@ def revoke_session(
     session = db.get(Session, sid)
     if session is None or session.user_id != user.id:
         raise ApiError(ErrorCode.NOT_FOUND, "Session not found", 404)
-    session.revoked_at = datetime.now(timezone.utc)
+    session.revoked_at = datetime.now(UTC)
     db.commit()
     return {"status": "ok"}
 

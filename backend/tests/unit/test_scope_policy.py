@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from app.domain.scope import Decision, Effect, Policy, Rule, RuleKind
+from app.domain.scope import Effect, Policy, Rule, RuleKind
 
 
 def policy(*rules: Rule) -> Policy:

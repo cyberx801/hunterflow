@@ -16,8 +16,13 @@ def _mk_program(client, csrf, name="ACME Corp"):
 
 
 def _add_rule(
-    client, csrf, program_id,
-    kind="domain_wildcard", value="*.example.com", effect="allow", priority=10,
+    client,
+    csrf,
+    program_id,
+    kind="domain_wildcard",
+    value="*.example.com",
+    effect="allow",
+    priority=10,
 ):
     resp = client.post(
         f"/api/v1/programs/{program_id}/scope/rules",
@@ -47,9 +52,7 @@ def test_program_crud(client):
     assert resp.status_code == 200
     assert resp.json()["description"] == "updated"
 
-    resp = client.delete(
-        f"/api/v1/programs/{program['id']}", headers=csrf_headers(csrf)
-    )
+    resp = client.delete(f"/api/v1/programs/{program['id']}", headers=csrf_headers(csrf))
     assert resp.status_code == 200
     assert client.get("/api/v1/programs").json()["total"] == 0
 
@@ -84,8 +87,13 @@ def test_scope_deny_precedence(client):
     program = _mk_program(client, csrf)
     _add_rule(client, csrf, program["id"], value="*.example.com", effect="allow")
     _add_rule(
-        client, csrf, program["id"],
-        kind="domain_exact", value="staging.example.com", effect="deny", priority=1,
+        client,
+        csrf,
+        program["id"],
+        kind="domain_exact",
+        value="staging.example.com",
+        effect="deny",
+        priority=1,
     )
     resp = client.post(
         f"/api/v1/programs/{program['id']}/scope/preview",

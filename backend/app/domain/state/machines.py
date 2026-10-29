@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import FrozenSet
 
 CARD_STATUSES = [
     "not_started",
@@ -38,9 +37,7 @@ FINDING_STATUSES = [
 
 FINDING_TRANSITIONS: dict[str, frozenset[str]] = {
     "potential": frozenset({"under_investigation", "false_positive", "duplicate"}),
-    "under_investigation": frozenset(
-        {"verified", "false_positive", "duplicate", "report_ready", "potential"}
-    ),
+    "under_investigation": frozenset({"verified", "false_positive", "duplicate", "report_ready", "potential"}),
     "verified": frozenset({"report_ready", "reported", "resolved", "false_positive", "duplicate"}),
     "false_positive": frozenset({"potential", "under_investigation"}),
     "duplicate": frozenset({"potential", "under_investigation"}),

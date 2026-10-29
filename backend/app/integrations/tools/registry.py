@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import json
-from typing import Iterable
+from collections.abc import Iterable
 
 from ...core.redaction import redact_text
-from .base import Observation, StepContext, ToolInfo
+from .base import Observation, StepContext, ToolAdapter, ToolInfo
 
 
 def _detect_version(binary: str, flag: str = "--version") -> ToolInfo | None:
@@ -113,7 +113,7 @@ class HttpxAdapter:
                     "status_code": data.get("status_code"),
                     "tech": data.get("tech") or [],
                     "title": data.get("title"),
-                    "ip": data.get("a") or (data.get("a", [])) ,
+                    "ip": data.get("a") or (data.get("a", [])),
                     "host": data.get("host"),
                 },
                 source=self.name,

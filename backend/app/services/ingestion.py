@@ -8,11 +8,12 @@ Provenance rules (database.md):
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from ..core.logging import get_logger
 from ..db.models import (
     Asset,
     AssetObservation,
@@ -26,7 +27,6 @@ from ..domain.assets import AssetKind, dedup_key, kind_of, normalize_host, norma
 from ..domain.endpoints.classify import classify
 from ..domain.scope import Policy
 from ..integrations.tools.base import Observation
-from ..core.logging import get_logger
 
 log = get_logger("hunterflow.ingestion")
 
@@ -41,7 +41,12 @@ def _scope_status(policy: Policy, host: str) -> str:
 
 
 def _get_or_create_asset(
-    db: Session, program: Program, kind: str, value: str, original: str, policy: Policy,
+    db: Session,
+    program: Program,
+    kind: str,
+    value: str,
+    original: str,
+    policy: Policy,
     tool_run_id: str | None,
 ) -> Asset:
     key_kind, key_value = dedup_key(kind, value)
@@ -53,8 +58,10 @@ def _get_or_create_asset(
         )
     )
     if asset is None:
-        host = normalize_host(value) if key_kind != AssetKind.URL else normalize_host(
-            value.split("://", 1)[1].split("/", 1)[0].split(":")[0] if "://" in value else value
+        host = (
+            normalize_host(value)
+            if key_kind != AssetKind.URL
+            else normalize_host(value.split("://", 1)[1].split("/", 1)[0].split(":")[0] if "://" in value else value)
         )
         asset = Asset(
             program_id=program.id,
@@ -65,7 +72,7 @@ def _get_or_create_asset(
         )
         db.add(asset)
         db.flush()
-    asset.last_seen = datetime.now(timezone.utc)
+    asset.last_seen = datetime.now(UTC)
     db.add(
         AssetObservation(
             program_id=program.id,
@@ -77,24 +84,21 @@ def _get_or_create_asset(
     return asset
 
 
-def ingest(db: Session, program: Program, observation: Observation, policy: Policy,
-           tool_run_id: str | None = None) -> list[Asset]:
+def ingest(
+    db: Session, program: Program, observation: Observation, policy: Policy, tool_run_id: str | None = None
+) -> list[Asset]:
     touched: list[Asset] = []
     kind = observation.kind
     payload = observation.payload
 
     if kind == "subdomain":
         host = payload["host"]
-        asset = _get_or_create_asset(
-            db, program, kind_of(host), host, host, policy, tool_run_id
-        )
+        asset = _get_or_create_asset(db, program, kind_of(host), host, host, policy, tool_run_id)
         touched.append(asset)
 
     elif kind == "web_probe":
         url = payload["url"]
-        asset = _get_or_create_asset(
-            db, program, AssetKind.URL, normalize_url(url), url, policy, tool_run_id
-        )
+        asset = _get_or_create_asset(db, program, AssetKind.URL, normalize_url(url), url, policy, tool_run_id)
         asset.http_status = payload.get("status_code")
         asset.tech = payload.get("tech") or asset.tech
         touched.append(asset)
@@ -109,9 +113,7 @@ def ingest(db: Session, program: Program, observation: Observation, policy: Poli
         if not decision.allowed:
             log.info("ingestion_blocked", url=url, reason=decision.reason)
             return touched
-        asset = _get_or_create_asset(
-            db, program, AssetKind.URL, normalize_url(url), url, policy, tool_run_id
-        )
+        asset = _get_or_create_asset(db, program, AssetKind.URL, normalize_url(url), url, policy, tool_run_id)
         method = (payload.get("method") or "GET").upper()
         path = parts.path or "/"
         endpoint = db.scalar(
@@ -134,18 +136,12 @@ def ingest(db: Session, program: Program, observation: Observation, policy: Poli
                 content_types=[payload["content_type"]] if payload.get("content_type") else None,
                 auth_indicators={"auth_challenge": cls.likely_auth_required},
                 category=cls.category,
-                status_distribution={str(payload["response_status"]): 1}
-                if payload.get("response_status")
-                else None,
+                status_distribution={str(payload["response_status"]): 1} if payload.get("response_status") else None,
             )
             db.add(endpoint)
             db.flush()
-        endpoint.last_seen = datetime.now(timezone.utc)
-        db.add(
-            EndpointObservation(
-                endpoint_id=endpoint.id, tool_run_id=tool_run_id, raw=payload
-            )
-        )
+        endpoint.last_seen = datetime.now(UTC)
+        db.add(EndpointObservation(endpoint_id=endpoint.id, tool_run_id=tool_run_id, raw=payload))
         touched.append(asset)
 
     elif kind == "scanner_finding":

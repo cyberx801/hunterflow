@@ -47,9 +47,7 @@ def publish_policy_version(
     ip: str | None = None,
 ) -> PolicyVersion:
     """Snapshot the current rules into an immutable version and bump the counter."""
-    rules = db.scalars(
-        select(ScopeRule).where(ScopeRule.program_id == program.id).order_by(ScopeRule.priority)
-    ).all()
+    rules = db.scalars(select(ScopeRule).where(ScopeRule.program_id == program.id).order_by(ScopeRule.priority)).all()
     if not rules:
         raise ApiError(ErrorCode.BAD_STATE, "Cannot publish an empty policy; add at least one rule")
     version_no = latest_policy_version(db, program.id) + 1
@@ -76,9 +74,7 @@ def publish_policy_version(
 
 def policy_at_version(db: Session, program_id: str, version: int) -> Policy:
     pv = db.scalar(
-        select(PolicyVersion).where(
-            PolicyVersion.program_id == program_id, PolicyVersion.version == version
-        )
+        select(PolicyVersion).where(PolicyVersion.program_id == program_id, PolicyVersion.version == version)
     )
     if pv is None:
         raise ApiError(ErrorCode.NOT_FOUND, "Policy version not found", 404)

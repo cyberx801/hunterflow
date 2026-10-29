@@ -8,7 +8,7 @@ from app.db.models import AuditEvent
 
 
 def test_audit_record_persisted(db):
-    evt = AuditService.record(db, "test.action", "programs", "abc", {"a": 1}, {"b": 2})
+    AuditService.record(db, "test.action", "programs", "abc", {"a": 1}, {"b": 2})
     db.commit()
     rows = db.query(AuditEvent).all()
     assert len(rows) == 1
@@ -17,12 +17,13 @@ def test_audit_record_persisted(db):
 
 
 def test_audit_redacts_secrets(db):
-    evt = AuditService.record(
+    AuditService.record(
         db,
         "test.action",
         after={"headers": {"Authorization": "Bearer supersecrettoken"}},
     )
     db.commit()
+    evt = db.query(AuditEvent).order_by(AuditEvent.created_at.desc()).first()
     assert "supersecrettoken" not in str(evt.after)
     assert "Authorization" in str(evt.after)
 

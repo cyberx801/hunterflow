@@ -6,7 +6,7 @@ vulnerability claim. Every factor is returned for display.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 DEFAULT_WEIGHTS: dict[str, int] = {
     "new_asset": 10,
@@ -62,7 +62,5 @@ def score(
             triggered = bool(signals.get(key, False))
             value = w if triggered else 0
         total += value
-        factors.append(
-            Factor(key=key, label=FACTOR_LABELS[key], weight=w, triggered=triggered)
-        )
+        factors.append(Factor(key=key, label=FACTOR_LABELS[key], weight=w, triggered=triggered))
     return PriorityResult(score=total, factors=factors)

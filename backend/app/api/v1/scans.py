@@ -60,11 +60,7 @@ def list_curated_templates(user: User = Depends(get_current_user)) -> list[Curat
     out = []
     for category, templates in CURATED_TEMPLATES.items():
         for tid, meta in templates.items():
-            out.append(
-                CuratedTemplateOut(
-                    id=tid, name=meta["name"], severity=meta["severity"], category=category
-                )
-            )
+            out.append(CuratedTemplateOut(id=tid, name=meta["name"], severity=meta["severity"], category=category))
     return out
 
 
@@ -118,9 +114,7 @@ def create_scan(
 
 
 @router.get("/jobs/{job_id}")
-def get_job(
-    job_id: str, db=Depends(get_db), user: User = Depends(get_current_user)
-) -> JobOut:
+def get_job(job_id: str, db=Depends(get_db), user: User = Depends(get_current_user)) -> JobOut:
     job = db.get(ScanJob, parse_uuid(job_id))
     if job is None:
         raise ApiError(ErrorCode.NOT_FOUND, "Job not found", 404)
@@ -129,9 +123,7 @@ def get_job(
         pv = db.get(PolicyVersion, job.policy_version_id)
         if pv is not None:
             policy_version = pv.version
-    runs = db.scalars(
-        select(ToolRun).where(ToolRun.scan_job_id == job.id).order_by(ToolRun.started_at)
-    ).all()
+    runs = db.scalars(select(ToolRun).where(ToolRun.scan_job_id == job.id).order_by(ToolRun.started_at)).all()
     return JobOut(
         **_scan_out(job).model_dump(),
         policy_version=policy_version,

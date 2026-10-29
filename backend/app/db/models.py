@@ -15,7 +15,6 @@ from datetime import datetime
 from sqlalchemy import (
     Boolean,
     DateTime,
-    Enum as SAEnum,
     ForeignKey,
     Index,
     Integer,
@@ -23,11 +22,14 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
 )
+from sqlalchemy import (
+    Enum as SAEnum,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import (
-    Base,
     GUID,
+    Base,
     JSONVariant,
     TimestampMixin,
     new_uuid,
@@ -52,7 +54,7 @@ class User(Base, TimestampMixin):
     password_hash: Mapped[str] = mapped_column(String(256), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
-    sessions: Mapped[list["Session"]] = relationship(back_populates="user")
+    sessions: Mapped[list[Session]] = relationship(back_populates="user")
 
 
 class Session(Base):
@@ -64,9 +66,7 @@ class Session(Base):
     csrf_secret: Mapped[str] = mapped_column(String(64), nullable=False)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=utcnow, nullable=False
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
 
     user: Mapped[User] = relationship(back_populates="sessions")
 
@@ -85,15 +85,11 @@ class Program(Base, TimestampMixin):
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     notes_md: Mapped[str | None] = mapped_column(Text, nullable=True)
     policy_source_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
-    last_policy_review: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    last_policy_review: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     archived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
-    scope_rules: Mapped[list["ScopeRule"]] = relationship(
-        back_populates="program", cascade="all, delete-orphan"
-    )
-    policy_versions: Mapped[list["PolicyVersion"]] = relationship(back_populates="program")
+    scope_rules: Mapped[list[ScopeRule]] = relationship(back_populates="program", cascade="all, delete-orphan")
+    policy_versions: Mapped[list[PolicyVersion]] = relationship(back_populates="program")
 
 
 class PolicyVersion(Base):
@@ -104,9 +100,7 @@ class PolicyVersion(Base):
     version: Mapped[int] = mapped_column(Integer, nullable=False)
     change_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
     snapshot: Mapped[dict] = mapped_column(JSONVariant, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=utcnow, nullable=False
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
 
     program: Mapped[Program] = relationship(back_populates="policy_versions")
 
@@ -118,9 +112,7 @@ class ScopeRule(Base, TimestampMixin):
 
     id: Mapped[str] = mapped_column(GUID, primary_key=True, default=new_uuid)
     program_id: Mapped[str] = mapped_column(GUID, ForeignKey("programs.id"), nullable=False, index=True)
-    policy_version_id: Mapped[str | None] = mapped_column(
-        GUID, ForeignKey("policy_versions.id"), nullable=True
-    )
+    policy_version_id: Mapped[str | None] = mapped_column(GUID, ForeignKey("policy_versions.id"), nullable=True)
     kind: Mapped[str] = mapped_column(
         SAEnum(
             "domain_exact",
@@ -135,9 +127,7 @@ class ScopeRule(Base, TimestampMixin):
         nullable=False,
     )
     value: Mapped[str] = mapped_column(String(2048), nullable=False)
-    effect: Mapped[str] = mapped_column(
-        SAEnum("allow", "deny", "restrict", name="scope_rule_effect"), nullable=False
-    )
+    effect: Mapped[str] = mapped_column(SAEnum("allow", "deny", "restrict", name="scope_rule_effect"), nullable=False)
     priority: Mapped[int] = mapped_column(Integer, default=100, nullable=False)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 
@@ -180,17 +170,13 @@ class Asset(Base, TimestampMixin):
     tech: Mapped[dict | None] = mapped_column(JSONVariant, nullable=True)
     tags: Mapped[list | None] = mapped_column(JSONVariant, nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
-    first_seen: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=utcnow, nullable=False
-    )
+    first_seen: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
     last_seen: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow, onupdate=utcnow, nullable=False
     )
 
     __table_args__ = (
-        UniqueConstraint(
-            "program_id", "type", "value_normalized", name="uq_asset_program_type_value"
-        ),
+        UniqueConstraint("program_id", "type", "value_normalized", name="uq_asset_program_type_value"),
         Index("ix_assets_program_last_seen", "program_id", "last_seen"),
     )
 
@@ -219,9 +205,7 @@ class AssetObservation(Base):
     import_job_id: Mapped[str | None] = mapped_column(GUID, ForeignKey("import_jobs.id"), nullable=True)
     raw: Mapped[dict] = mapped_column(JSONVariant, nullable=False)
     normalized_to: Mapped[str | None] = mapped_column(GUID, ForeignKey("assets.id"), nullable=True)
-    observed_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=utcnow, nullable=False
-    )
+    observed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
 
 
 class Endpoint(Base, TimestampMixin):
@@ -255,17 +239,13 @@ class Endpoint(Base, TimestampMixin):
     )
     category_manual: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     status_distribution: Mapped[dict | None] = mapped_column(JSONVariant, nullable=True)
-    first_seen: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=utcnow, nullable=False
-    )
+    first_seen: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
     last_seen: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow, onupdate=utcnow, nullable=False
     )
 
     __table_args__ = (
-        UniqueConstraint(
-            "program_id", "asset_id", "method", "path", name="uq_endpoint_program_asset_method_path"
-        ),
+        UniqueConstraint("program_id", "asset_id", "method", "path", name="uq_endpoint_program_asset_method_path"),
         Index("ix_endpoints_category", "category"),
     )
 
@@ -277,9 +257,7 @@ class EndpointObservation(Base):
     endpoint_id: Mapped[str] = mapped_column(GUID, ForeignKey("endpoints.id"), nullable=False, index=True)
     tool_run_id: Mapped[str | None] = mapped_column(GUID, ForeignKey("tool_runs.id"), nullable=True)
     raw: Mapped[dict] = mapped_column(JSONVariant, nullable=False)
-    observed_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=utcnow, nullable=False
-    )
+    observed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
 
 
 # --------------------------------------------------------------------------
@@ -311,9 +289,7 @@ class ScanJob(Base, TimestampMixin):
     id: Mapped[str] = mapped_column(GUID, primary_key=True, default=new_uuid)
     program_id: Mapped[str] = mapped_column(GUID, ForeignKey("programs.id"), nullable=False, index=True)
     profile: Mapped[str] = mapped_column(String(64), nullable=False)
-    policy_version_id: Mapped[str | None] = mapped_column(
-        GUID, ForeignKey("policy_versions.id"), nullable=True
-    )
+    policy_version_id: Mapped[str | None] = mapped_column(GUID, ForeignKey("policy_versions.id"), nullable=True)
     target_filter: Mapped[dict | None] = mapped_column(JSONVariant, nullable=True)
     dry_run: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     status: Mapped[str] = mapped_column(
@@ -347,9 +323,7 @@ class ToolRun(Base):
         default="running",
         nullable=False,
     )
-    started_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=utcnow, nullable=False
-    )
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
@@ -413,9 +387,7 @@ class ComparisonMember(Base):
 
     id: Mapped[str] = mapped_column(GUID, primary_key=True, default=new_uuid)
     set_id: Mapped[str] = mapped_column(GUID, ForeignKey("comparison_sets.id"), nullable=False, index=True)
-    transaction_id: Mapped[str] = mapped_column(
-        GUID, ForeignKey("http_transactions.id"), nullable=False
-    )
+    transaction_id: Mapped[str] = mapped_column(GUID, ForeignKey("http_transactions.id"), nullable=False)
     position: Mapped[int] = mapped_column(Integer, nullable=False)
 
 
@@ -444,9 +416,7 @@ class ResearchCard(Base, TimestampMixin):
     id: Mapped[str] = mapped_column(GUID, primary_key=True, default=new_uuid)
     program_id: Mapped[str] = mapped_column(GUID, ForeignKey("programs.id"), nullable=False, index=True)
     asset_id: Mapped[str | None] = mapped_column(GUID, ForeignKey("assets.id"), nullable=True, index=True)
-    endpoint_id: Mapped[str | None] = mapped_column(
-        GUID, ForeignKey("endpoints.id"), nullable=True, index=True
-    )
+    endpoint_id: Mapped[str | None] = mapped_column(GUID, ForeignKey("endpoints.id"), nullable=True, index=True)
     title: Mapped[str] = mapped_column(String(300), nullable=False)
     hypothesis: Mapped[str | None] = mapped_column(Text, nullable=True)
     test_category: Mapped[str | None] = mapped_column(String(64), nullable=True)
@@ -470,9 +440,7 @@ class CardStatusHistory(Base):
     card_id: Mapped[str] = mapped_column(GUID, ForeignKey("research_cards.id"), nullable=False, index=True)
     from_status: Mapped[str | None] = mapped_column(String(32), nullable=True)
     to_status: Mapped[str] = mapped_column(String(32), nullable=False)
-    changed_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=utcnow, nullable=False
-    )
+    changed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
     changed_by: Mapped[str | None] = mapped_column(GUID, ForeignKey("users.id"), nullable=True)
 
 
@@ -525,9 +493,7 @@ class Finding(Base, TimestampMixin):
     category: Mapped[str | None] = mapped_column(String(128), nullable=True)
     cwe: Mapped[str | None] = mapped_column(String(32), nullable=True)
     asset_id: Mapped[str | None] = mapped_column(GUID, ForeignKey("assets.id"), nullable=True, index=True)
-    endpoint_id: Mapped[str | None] = mapped_column(
-        GUID, ForeignKey("endpoints.id"), nullable=True, index=True
-    )
+    endpoint_id: Mapped[str | None] = mapped_column(GUID, ForeignKey("endpoints.id"), nullable=True, index=True)
     severity: Mapped[str | None] = mapped_column(
         SAEnum("info", "low", "medium", "high", "critical", name="severity"), nullable=True
     )
@@ -559,9 +525,7 @@ class FindingStatusHistory(Base):
     finding_id: Mapped[str] = mapped_column(GUID, ForeignKey("findings.id"), nullable=False, index=True)
     from_status: Mapped[str | None] = mapped_column(String(32), nullable=True)
     to_status: Mapped[str] = mapped_column(String(32), nullable=False)
-    changed_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=utcnow, nullable=False
-    )
+    changed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
     changed_by: Mapped[str | None] = mapped_column(GUID, ForeignKey("users.id"), nullable=True)
 
 
@@ -573,13 +537,9 @@ class FindingLink(Base):
     id: Mapped[str] = mapped_column(GUID, primary_key=True, default=new_uuid)
     finding_id: Mapped[str] = mapped_column(GUID, ForeignKey("findings.id"), nullable=False, index=True)
     linked_finding_id: Mapped[str] = mapped_column(GUID, ForeignKey("findings.id"), nullable=False)
-    kind: Mapped[str] = mapped_column(
-        SAEnum("duplicate_of", "related", name="finding_link_kind"), nullable=False
-    )
+    kind: Mapped[str] = mapped_column(SAEnum("duplicate_of", "related", name="finding_link_kind"), nullable=False)
     note: Mapped[str | None] = mapped_column(Text, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=utcnow, nullable=False
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
 
 
 class EvidenceFile(Base, TimestampMixin):
@@ -603,9 +563,7 @@ class EvidenceLink(Base):
     evidence_id: Mapped[str] = mapped_column(GUID, ForeignKey("evidence_files.id"), nullable=False, index=True)
     finding_id: Mapped[str | None] = mapped_column(GUID, ForeignKey("findings.id"), nullable=True)
     card_id: Mapped[str | None] = mapped_column(GUID, ForeignKey("research_cards.id"), nullable=True)
-    transaction_id: Mapped[str | None] = mapped_column(
-        GUID, ForeignKey("http_transactions.id"), nullable=True
-    )
+    transaction_id: Mapped[str | None] = mapped_column(GUID, ForeignKey("http_transactions.id"), nullable=True)
 
 
 class Report(Base, TimestampMixin):
@@ -617,9 +575,7 @@ class Report(Base, TimestampMixin):
     format: Mapped[str] = mapped_column(SAEnum("markdown", "json", "html", name="report_format"), nullable=False)
     template_version: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
     content_ref: Mapped[str] = mapped_column(String(1024), nullable=False)
-    generated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=utcnow, nullable=False
-    )
+    generated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
 
 
 # --------------------------------------------------------------------------
@@ -638,9 +594,7 @@ class AuditEvent(Base):
     after: Mapped[dict | None] = mapped_column(JSONVariant, nullable=True)
     correlation_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     ip: Mapped[str | None] = mapped_column(String(64), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=utcnow, nullable=False, index=True
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False, index=True)
 
 
 class Setting(Base):

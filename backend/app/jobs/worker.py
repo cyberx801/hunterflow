@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 import argparse
-import threading
 
 from ..core.config import get_settings
-from .broker import setup_broker
 from . import actors  # noqa: F401 (registers actors)
+from .broker import setup_broker
 
 try:
     from dramatiq.cli import main as dramatiq_main

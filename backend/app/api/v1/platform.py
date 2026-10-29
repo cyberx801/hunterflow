@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends
 from sqlalchemy import func, select
@@ -33,17 +33,20 @@ def overview(db=Depends(get_db), user: User = Depends(get_current_user)) -> Over
     asset_count = db.scalar(select(func.count()).select_from(Asset)) or 0
     endpoint_count = db.scalar(select(func.count()).select_from(Endpoint)) or 0
     finding_count = db.scalar(select(func.count()).select_from(Finding)) or 0
-    unverified = db.scalar(
-        select(func.count()).select_from(Finding).where(
-            Finding.validation_status == "unverified",
-            Finding.status.in_(["potential", "under_investigation"]),
+    unverified = (
+        db.scalar(
+            select(func.count())
+            .select_from(Finding)
+            .where(
+                Finding.validation_status == "unverified",
+                Finding.status.in_(["potential", "under_investigation"]),
+            )
         )
-    ) or 0
-    active_scans = db.scalar(
-        select(func.count()).select_from(ScanJob).where(
-            ScanJob.status.in_(["queued", "running"])
-        )
-    ) or 0
+        or 0
+    )
+    active_scans = (
+        db.scalar(select(func.count()).select_from(ScanJob).where(ScanJob.status.in_(["queued", "running"]))) or 0
+    )
 
     queue_cards = db.scalars(
         select(ResearchCard)
@@ -75,7 +78,7 @@ def overview(db=Depends(get_db), user: User = Depends(get_current_user)) -> Over
         {"id": f.id, "title": f.title, "severity": f.severity, "status": f.status} for f in need_verification
     ]
 
-    since = datetime.now(timezone.utc) - timedelta(days=1)
+    since = datetime.now(UTC) - timedelta(days=1)
     recent_assets = db.scalars(
         select(Asset).where(Asset.first_seen >= since).order_by(Asset.first_seen.desc()).limit(8)
     ).all()
@@ -122,8 +125,7 @@ def get_settings_view(
         "evidence_max_mb": settings.evidence_max_mb,
         "evidence_retention_days": settings.evidence_retention_days,
         "tools": [
-            ToolOut(name=t.name, version=t.version, available=t.available, last_checked=t.last_checked)
-            for t in tools
+            ToolOut(name=t.name, version=t.version, available=t.available, last_checked=t.last_checked) for t in tools
         ],
     }
 
@@ -154,10 +156,7 @@ def refresh_tools(
     settings: Settings = Depends(get_settings),
 ) -> list[ToolOut]:
     tools = detect_all(db, settings)
-    return [
-        ToolOut(name=t.name, version=t.version, available=t.available, last_checked=t.last_checked)
-        for t in tools
-    ]
+    return [ToolOut(name=t.name, version=t.version, available=t.available, last_checked=t.last_checked) for t in tools]
 
 
 @router.get("/audit")
@@ -172,11 +171,7 @@ def list_audit(
     if action:
         stmt = stmt.where(AuditEvent.action == action)
     total = db.scalar(select(func.count()).select_from(stmt.subquery())) or 0
-    rows = db.scalars(
-        stmt.order_by(AuditEvent.created_at.desc())
-        .offset((page - 1) * page_size)
-        .limit(page_size)
-    ).all()
+    rows = db.scalars(stmt.order_by(AuditEvent.created_at.desc()).offset((page - 1) * page_size).limit(page_size)).all()
     return {
         "total": total,
         "items": [

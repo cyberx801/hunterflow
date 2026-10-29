@@ -49,7 +49,9 @@ class EndpointOut(BaseModel):
 
 
 class EndpointUpdate(BaseModel):
-    category: str = Field(pattern=r"^(auth|account|profile|admin|file|payment|object_access|resource_mgmt|api_versioning|other)$")
+    category: str = Field(
+        pattern=r"^(auth|account|profile|admin|file|payment|object_access|resource_mgmt|api_versioning|other)$"
+    )
 
 
 class ResearchCardCreate(BaseModel):

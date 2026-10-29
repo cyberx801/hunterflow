@@ -10,8 +10,8 @@
 from __future__ import annotations
 
 import dramatiq
-from dramatiq.brokers.stub import StubBroker
 from dramatiq.brokers.redis import RedisBroker
+from dramatiq.brokers.stub import StubBroker
 
 from ..core.config import Settings
 

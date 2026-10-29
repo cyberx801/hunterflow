@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import Depends, Request
 from sqlalchemy import select
@@ -22,7 +22,7 @@ CSRF_HEADER = "X-CSRF-Token"
 def ensure_utc(dt: datetime) -> datetime:
     """SQLite returns naive datetimes; normalize to aware UTC for comparisons."""
     if dt.tzinfo is None:
-        return dt.replace(tzinfo=timezone.utc)
+        return dt.replace(tzinfo=UTC)
     return dt
 
 
@@ -45,7 +45,7 @@ def _current_session(request: Request, db: Session) -> SessionModel:
     session = db.scalar(select(SessionModel).where(SessionModel.token_hash == token_hash))
     if session is None or session.revoked_at is not None:
         raise ApiError(ErrorCode.UNAUTHORIZED, "Session invalid", 401)
-    if ensure_utc(session.expires_at) < datetime.now(timezone.utc):
+    if ensure_utc(session.expires_at) < datetime.now(UTC):
         raise ApiError(ErrorCode.UNAUTHORIZED, "Session expired", 401)
     return session
 
@@ -54,9 +54,7 @@ def get_current_session(request: Request, db: Session = Depends(get_db)) -> Sess
     return _current_session(request, db)
 
 
-def get_current_user(
-    request: Request, db: Session = Depends(get_db)
-) -> User:
+def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
     session = _current_session(request, db)
     user = db.get(User, session.user_id)
     if user is None or not user.is_active:
@@ -70,16 +68,12 @@ def require_csrf(request: Request) -> None:
     session = getattr(request.state, "session", None)
     if session is None:
         raise ApiError(ErrorCode.UNAUTHORIZED, "Not authenticated", 401)
-    presented = request.headers.get(CSRF_HEADER) or request.headers.get(
-        "x-csrf-token", ""
-    )
+    presented = request.headers.get(CSRF_HEADER) or request.headers.get("x-csrf-token", "")
     if not verify_csrf_token(session.csrf_secret, presented):
         raise ApiError(ErrorCode.FORBIDDEN, "CSRF token missing or invalid", 403)
 
 
-def enforce_login_rate_limit(
-    request: Request, settings: Settings = Depends(get_settings)
-) -> None:
+def enforce_login_rate_limit(request: Request, settings: Settings = Depends(get_settings)) -> None:
     """IP-based throttle, applied in addition to the per-account limit enforced
     inside the login handler (see auth.py)."""
     key = f"login-ip:{request.client.host if request.client else 'unknown'}"

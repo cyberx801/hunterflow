@@ -8,9 +8,9 @@ Honesty rules (Constitution P5):
 
 from __future__ import annotations
 
-import json
 import html as html_module
-from datetime import datetime, timezone
+import json
+from datetime import UTC, datetime
 from pathlib import Path
 
 from ..core.config import Settings
@@ -22,7 +22,12 @@ SEVERITY_ORDER = {"info": 0, "low": 1, "medium": 2, "high": 3, "critical": 4}
 
 
 def _verification_banner(finding: Finding) -> str:
-    if finding.validation_status == "verified_human" and finding.status in ("verified", "report_ready", "reported", "resolved"):
+    if finding.validation_status == "verified_human" and finding.status in (
+        "verified",
+        "report_ready",
+        "reported",
+        "resolved",
+    ):
         return "**Verification status: VERIFIED (human-confirmed)**"
     return "**Verification status: UNVERIFIED — this finding requires manual verification**"
 
@@ -114,14 +119,12 @@ def render_json(finding: Finding, db) -> str:
                     "size": ev.size,
                 }
                 for ev in [
-                    db.get(EvidenceFile, l.evidence_id)
-                    for l in db.query(EvidenceLink)
-                    .filter(EvidenceLink.finding_id == finding.id)
-                    .all()
+                    db.get(EvidenceFile, link.evidence_id)
+                    for link in db.query(EvidenceLink).filter(EvidenceLink.finding_id == finding.id).all()
                 ]
                 if ev is not None
             ],
-            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
         },
         indent=2,
     )

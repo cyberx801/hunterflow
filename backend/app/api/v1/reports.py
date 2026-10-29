@@ -36,18 +36,18 @@ def generate_report(
     db.add(report)
     db.commit()
     return ReportOut(
-        id=report.id, finding_id=finding.id, format=body.format,
-        generated_at=report.generated_at, content=content,
+        id=report.id,
+        finding_id=finding.id,
+        format=body.format,
+        generated_at=report.generated_at,
+        content=content,
     )
 
 
 @router.get("/reports")
 def list_reports(db=Depends(get_db), user: User = Depends(get_current_user)) -> list[ReportOut]:
     rows = db.scalars(select(Report).order_by(Report.generated_at.desc()).limit(100)).all()
-    return [
-        ReportOut(id=r.id, finding_id=r.finding_id, format=r.format, generated_at=r.generated_at)
-        for r in rows
-    ]
+    return [ReportOut(id=r.id, finding_id=r.finding_id, format=r.format, generated_at=r.generated_at) for r in rows]
 
 
 @router.get("/reports/{report_id}")
@@ -62,6 +62,9 @@ def get_report(report_id: str, db=Depends(get_db), user: User = Depends(get_curr
     if p.exists():
         content = p.read_text(encoding="utf-8")
     return ReportOut(
-        id=report.id, finding_id=report.finding_id, format=report.format,
-        generated_at=report.generated_at, content=content,
+        id=report.id,
+        finding_id=report.finding_id,
+        format=report.format,
+        generated_at=report.generated_at,
+        content=content,
     )

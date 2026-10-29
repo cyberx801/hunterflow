@@ -149,9 +149,7 @@ def transition_finding(
     try:
         assert_transition(FINDING_TRANSITIONS, finding.status, body.to)
     except TransitionError:
-        raise ApiError(
-            ErrorCode.BAD_STATE, f"Invalid transition: {finding.status} -> {body.to}"
-        ) from None
+        raise ApiError(ErrorCode.BAD_STATE, f"Invalid transition: {finding.status} -> {body.to}") from None
     if body.to == "verified":
         # Constitution P4: only an explicit human confirmation verifies a finding.
         if not body.verified_human_confirmation:
@@ -163,23 +161,28 @@ def transition_finding(
         finding.validation_status = "verified_human"
     db.add(
         FindingStatusHistory(
-            finding_id=finding.id, from_status=finding.status, to_status=body.to,
+            finding_id=finding.id,
+            from_status=finding.status,
+            to_status=body.to,
             changed_by=user.id,
         )
     )
     finding.status = body.to
     AuditService.record(
-        db, "finding.transition", "finding", finding.id,
-        before={"status": finding.status}, after={"status": body.to}, actor_id=user.id,
+        db,
+        "finding.transition",
+        "finding",
+        finding.id,
+        before={"status": finding.status},
+        after={"status": body.to},
+        actor_id=user.id,
     )
     db.commit()
     return _out(finding)
 
 
 @router.get("/findings/{finding_id}/duplicates")
-def find_duplicates(
-    finding_id: str, db=Depends(get_db), user: User = Depends(get_current_user)
-) -> list[dict]:
+def find_duplicates(finding_id: str, db=Depends(get_db), user: User = Depends(get_current_user)) -> list[dict]:
     finding = _get(db, finding_id)
     endpoint = None
     if finding.endpoint_id:
@@ -201,8 +204,12 @@ def find_duplicates(
             if ep2 is not None:
                 other_endpoint = f"{ep2.method} {ep2.path}"
         result = duplicate_score(
-            endpoint, other_endpoint, finding.category, other.category,
-            finding.title, other.title,
+            endpoint,
+            other_endpoint,
+            finding.category,
+            other.category,
+            finding.title,
+            other.title,
         )
         if result.score >= 0.35:
             out.append(
@@ -231,9 +238,7 @@ def link_finding(
     other = db.get(Finding, parse_uuid(body.linked_finding_id))
     if other is None or other.program_id != finding.program_id:
         raise ApiError(ErrorCode.NOT_FOUND, "Linked finding not found", 404)
-    link = FindingLink(
-        finding_id=finding.id, linked_finding_id=other.id, kind=body.kind, note=body.note
-    )
+    link = FindingLink(finding_id=finding.id, linked_finding_id=other.id, kind=body.kind, note=body.note)
     db.add(link)
     if body.kind == "duplicate_of":
         if finding.status not in ("duplicate", "resolved", "false_positive"):
@@ -243,14 +248,10 @@ def link_finding(
 
 
 @router.get("/findings/{finding_id}/links")
-def list_links(
-    finding_id: str, db=Depends(get_db), user: User = Depends(get_current_user)
-) -> list[dict]:
+def list_links(finding_id: str, db=Depends(get_db), user: User = Depends(get_current_user)) -> list[dict]:
     finding = _get(db, finding_id)
-    rows = db.scalars(
-        select(FindingLink).where(FindingLink.finding_id == finding.id)
-    ).all()
+    rows = db.scalars(select(FindingLink).where(FindingLink.finding_id == finding.id)).all()
     return [
-        {"id": l.id, "linked_finding_id": l.linked_finding_id, "kind": l.kind, "note": l.note}
-        for l in rows
+        {"id": link.id, "linked_finding_id": link.linked_finding_id, "kind": link.kind, "note": link.note}
+        for link in rows
     ]

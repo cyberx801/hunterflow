@@ -86,21 +86,34 @@ class TestClassification:
 class TestDedup:
     def test_same_endpoint_and_title(self):
         s = duplicate_score(
-            "/api/orders/1", "/api/orders/1", "object_access", "object_access",
-            "IDOR on orders endpoint", "IDOR on orders endpoint",
+            "/api/orders/1",
+            "/api/orders/1",
+            "object_access",
+            "object_access",
+            "IDOR on orders endpoint",
+            "IDOR on orders endpoint",
         )
         assert s.is_duplicate
 
     def test_same_endpoint_pattern_similar_title(self):
         s = duplicate_score(
-            "/api/orders/1", "/api/orders/2", "object_access", "object_access",
-            "IDOR order access", "Broken object level authorization on order",
+            "/api/orders/1",
+            "/api/orders/2",
+            "object_access",
+            "object_access",
+            "IDOR order access",
+            "Broken object level authorization on order",
         )
         assert s.score >= 0.5  # candidate, maybe not full duplicate
 
     def test_different_everything(self):
         s = duplicate_score(
-            "/a", "/b", "auth", "payment", "login bypass", "payment takeover",
+            "/a",
+            "/b",
+            "auth",
+            "payment",
+            "login bypass",
+            "payment takeover",
         )
         assert not s.is_duplicate
 

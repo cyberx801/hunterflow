@@ -2,18 +2,17 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, Request
-from sqlalchemy import func, or_, select
+from sqlalchemy import or_, select
 
 from ...core.audit import AuditService
-from ...core.errors import ApiError, ErrorCode
 from ...db.models import Program, User
 from ...schemas.programs import ProgramCreate, ProgramOut, ProgramUpdate
+from ...services import programs as programs_service
 from ..deps import get_current_user, get_db, parse_uuid, require_csrf
 from ._common import ListParams, Page, paginate
-from ...services import programs as programs_service
 
 router = APIRouter(prefix="/programs", tags=["programs"])
 
@@ -76,8 +75,13 @@ def create_program(
     db.add(program)
     db.flush()
     AuditService.record(
-        db, "program.created", "program", program.id, after={"name": program.name},
-        actor_id=user.id, ip=request.client.host if request.client else None,
+        db,
+        "program.created",
+        "program",
+        program.id,
+        after={"name": program.name},
+        actor_id=user.id,
+        ip=request.client.host if request.client else None,
     )
     db.commit()
     return _out(db, program)
@@ -108,12 +112,16 @@ def update_program(
     for key, value in changes.items():
         setattr(program, key, value)
     if archived is True and program.archived_at is None:
-        program.archived_at = datetime.now(timezone.utc)
+        program.archived_at = datetime.now(UTC)
     elif archived is False:
         program.archived_at = None
     AuditService.record(
-        db, "program.updated", "program", program.id,
-        actor_id=user.id, ip=request.client.host if request.client else None,
+        db,
+        "program.updated",
+        "program",
+        program.id,
+        actor_id=user.id,
+        ip=request.client.host if request.client else None,
     )
     db.commit()
     return _out(db, program)
@@ -128,7 +136,7 @@ def archive_program(
     _: None = Depends(require_csrf),
 ) -> dict:
     program = programs_service.get_program(db, parse_uuid(program_id))
-    program.archived_at = datetime.now(timezone.utc)
+    program.archived_at = datetime.now(UTC)
     AuditService.record(db, "program.archived", "program", program.id, actor_id=user.id)
     db.commit()
     return {"status": "ok"}

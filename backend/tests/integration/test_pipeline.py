@@ -8,13 +8,8 @@ import threading
 import time
 from pathlib import Path
 
-import pytest
-
-from app.db.models import PolicyVersion, ScanJob, Tool, ToolRun
+from app.db.models import ScanJob, Tool, ToolRun
 from app.jobs.pipeline import run_scan_job
-from app.services.programs import publish_policy_version
-from app.services.scans import create_scan_job
-from app.core.errors import ApiError
 
 FAKE_OUTPUT = [
     {"host": "api.example.com", "source": "test"},
@@ -42,7 +37,8 @@ for item in {json.dumps(FAKE_OUTPUT)}:
 
 def _setup_program(client, csrf) -> str:
     resp = client.post(
-        "/api/v1/programs", json={"name": "ACME", "platform": "other"},
+        "/api/v1/programs",
+        json={"name": "ACME", "platform": "other"},
         headers={"X-CSRF-Token": csrf},
     )
     program_id = resp.json()["id"]
@@ -68,7 +64,7 @@ def _make_pipeline(settings, app, tmp_path, mode="output"):
             args += ["-d", t]
         return args
 
-    from app.integrations.tools.registry import SubfinderAdapter, get_adapter
+    from app.integrations.tools.registry import SubfinderAdapter
 
     class FakeSubfinder(SubfinderAdapter):
         def build_args(self, ctx, binary):
@@ -180,8 +176,6 @@ def test_concurrency_limit(client, settings, app, tmp_path):
     program_id = _setup_program(client, me["csrf_token"])
     _make_pipeline(settings, app, tmp_path, mode="sleep")
 
-    db_factory = app.state.session_factory()
-    from app.jobs.actors import enqueue_scan
     from unittest.mock import patch
 
     # First job: created but NOT executed (block enqueue so it stays queued).
@@ -215,6 +209,7 @@ def test_cancellation_kills_running_tool(client, settings, app, tmp_path, db):
         job = _create_job(client, me["csrf_token"], program_id)
 
     result = {}
+
     def run():
         try:
             run_scan_job(db_factory, settings, job["id"])

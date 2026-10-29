@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..core.audit import AuditService
@@ -43,7 +43,10 @@ def transition(db: Session, card: ResearchCard, to: str, actor_id: str | None = 
     card.status = to
     db.flush()
     AuditService.record(
-        db, "research.transition", "research_card", card.id,
+        db,
+        "research.transition",
+        "research_card",
+        card.id,
         before={"status": card.status, "from": card.status},
         after={"status": to},
         actor_id=actor_id,
@@ -64,7 +67,9 @@ def refresh_priority(db: Session, card: ResearchCard) -> None:
 
         endpoint = db.get(Endpoint, card.endpoint_id)
         if endpoint is not None:
-            signals["auth_sensitive"] = bool((endpoint.auth_indicators or {}).get("auth_challenge")) or endpoint.category in ("auth", "account", "admin", "payment")
+            signals["auth_sensitive"] = bool(
+                (endpoint.auth_indicators or {}).get("auth_challenge")
+            ) or endpoint.category in ("auth", "account", "admin", "payment")
             if card.status == "confirmed":
                 signals = {**signals, "untested": False}
     result = score(signals, researcher_weight=1 if card.status in ("needs_verification", "confirmed") else 0)
@@ -72,8 +77,9 @@ def refresh_priority(db: Session, card: ResearchCard) -> None:
     card.priority_factors = {f.key: f.triggered for f in result.factors}
 
 
-def instantiate_template(db: Session, template_id: str, program_id: str, title: str,
-                         asset_id: str | None, endpoint_id: str | None) -> ResearchCard:
+def instantiate_template(
+    db: Session, template_id: str, program_id: str, title: str, asset_id: str | None, endpoint_id: str | None
+) -> ResearchCard:
     template = db.get(ResearchTemplate, template_id)
     if template is None:
         raise ApiError(ErrorCode.NOT_FOUND, "Template not found", 404)
@@ -82,7 +88,9 @@ def instantiate_template(db: Session, template_id: str, program_id: str, title: 
         program_id=program_id,
         asset_id=asset_id,
         endpoint_id=endpoint_id,
-        title=(body.get("title_pattern") or "{}").replace("{title}", title) if title else body.get("title_pattern") or "Untitled research card",
+        title=(body.get("title_pattern") or "{}").replace("{title}", title)
+        if title
+        else body.get("title_pattern") or "Untitled research card",
         hypothesis=body.get("hypothesis"),
         test_category=body.get("test_category"),
         methodology=body.get("methodology"),
@@ -106,7 +114,14 @@ def default_templates(db: Session) -> list[ResearchTemplate]:
             "hypothesis": "Verify whether object-level authorization is enforced between two authorized test accounts.",
             "test_category": "object_access",
             "methodology": "1) Access resource as account A. 2) Repeat as account B using A's resource identifier. 3) Compare responses and record observations.",
-            "checklist": ["Identify resource identifiers", "Prepare two authorized accounts", "Repeat request as second account", "Compare responses", "Record evidence", "State verdict with evidence"],
+            "checklist": [
+                "Identify resource identifiers",
+                "Prepare two authorized accounts",
+                "Repeat request as second account",
+                "Compare responses",
+                "Record evidence",
+                "State verdict with evidence",
+            ],
         },
         {
             "name": "Authn bypass — missing or weak authentication",
@@ -122,10 +137,18 @@ def default_templates(db: Session) -> list[ResearchTemplate]:
             "hypothesis": "Test whether user-controlled identifiers are validated against the session's ownership.",
             "test_category": "object_access",
             "methodology": "Enumerate parameters holding identifiers; substitute other users' identifiers; compare responses.",
-            "checklist": ["Map identifier parameters", "Collect second account identifiers", "Substitute identifiers", "Compare responses", "Verdict"],
+            "checklist": [
+                "Map identifier parameters",
+                "Collect second account identifiers",
+                "Substitute identifiers",
+                "Compare responses",
+                "Verdict",
+            ],
         },
     ]
-    existing = db.scalars(select(ResearchTemplate).where(ResearchTemplate.name.in_([b["name"] for b in builtins]))).all()
+    existing = db.scalars(
+        select(ResearchTemplate).where(ResearchTemplate.name.in_([b["name"] for b in builtins]))
+    ).all()
     names = {t.name for t in existing}
     created = []
     for b in builtins:

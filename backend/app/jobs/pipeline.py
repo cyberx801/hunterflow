@@ -2,22 +2,20 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from pathlib import Path
+from datetime import UTC, datetime
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..core.config import Settings
 from ..core.errors import ApiError, ErrorCode
-from ..core.logging import correlation_id_var, get_logger, set_correlation_id
+from ..core.logging import get_logger, set_correlation_id
 from ..core.redaction import redact_text
 from ..db.models import JobStatus, Program, ScanJob, ToolRun
 from ..domain.scope import Policy
 from ..domain.state import JOB_TRANSITIONS, assert_transition
 from ..integrations.tools.registry import get_adapter
 from ..services.ingestion import ingest
-from ..services.programs import policy_at_version
 from .profiles import resolve_profile
 from .runner import ToolRunner
 
@@ -112,7 +110,7 @@ def run_scan_job(db_factory, settings: Settings, job_id: str) -> None:
             return
         assert_transition(JOB_TRANSITIONS, job.status, "running")
         job.status = JobStatus.running.value
-        job.started_at = datetime.now(timezone.utc)
+        job.started_at = datetime.now(UTC)
         job.progress = {"step": 0, "total_steps": 0, "current_tool": None, "done": 0, "items": 0}
         db.commit()
 
@@ -127,7 +125,7 @@ def run_scan_job(db_factory, settings: Settings, job_id: str) -> None:
             # Dry run: no tool execution at all (HF-FR-028).
             job.progress = {**job.progress, "dry_run": True, "note": "planned only"}
             job.status = JobStatus.completed.value
-            job.finished_at = datetime.now(timezone.utc)
+            job.finished_at = datetime.now(UTC)
             db.commit()
             log.info("job_dry_run_complete", job_id=job_id, steps=len(steps))
             return
@@ -175,19 +173,23 @@ def run_scan_job(db_factory, settings: Settings, job_id: str) -> None:
             tool_run.status = result.status
             tool_run.stdout_ref = str(result.stdout_path) if result.stdout_path else None
             tool_run.stderr_ref = str(result.stderr_path) if result.stderr_path else None
-            tool_run.finished_at = datetime.now(timezone.utc)
+            tool_run.finished_at = datetime.now(UTC)
             db.commit()
 
             if result.status == "cancelled":
                 assert_transition(JOB_TRANSITIONS, job.status, "cancelled")
                 job.status = JobStatus.cancelled.value
-                job.finished_at = datetime.now(timezone.utc)
+                job.finished_at = datetime.now(UTC)
                 db.commit()
                 log.info("job_cancelled", job_id=job_id)
                 return
             if result.status in ("failed", "timeout"):
-                fail_job(db, job, "TIMEOUT" if result.status == "timeout" else "NONZERO_EXIT",
-                         f"Tool {tool_name} {result.status}")
+                fail_job(
+                    db,
+                    job,
+                    "TIMEOUT" if result.status == "timeout" else "NONZERO_EXIT",
+                    f"Tool {tool_name} {result.status}",
+                )
                 return
 
             if result.stdout_path and result.stdout_path.exists():
@@ -201,13 +203,13 @@ def run_scan_job(db_factory, settings: Settings, job_id: str) -> None:
 
         assert_transition(JOB_TRANSITIONS, job.status, "completed")
         job.status = JobStatus.completed.value
-        job.finished_at = datetime.now(timezone.utc)
+        job.finished_at = datetime.now(UTC)
         db.commit()
         log.info("job_completed", job_id=job_id)
     except InterruptedError:
         job = load_job(db, job_id)
         job.status = JobStatus.cancelled.value
-        job.finished_at = datetime.now(timezone.utc)
+        job.finished_at = datetime.now(UTC)
         db.commit()
         log.info("job_cancelled", job_id=job_id)
     except Exception:
@@ -231,7 +233,7 @@ def fail_job(db: Session, job: ScanJob, code: str, message: str) -> None:
         pass
     job.status = JobStatus.failed.value
     job.error_code = code
-    job.finished_at = datetime.now(timezone.utc)
+    job.finished_at = datetime.now(UTC)
     db.commit()
     log.info("job_failed", job_id=job.id, error_code=code, message=message)
 
@@ -273,8 +275,7 @@ def _filter_targets(
     return out
 
 
-def _build_context(tool_name: str, targets: list[str], policy: Policy, options: dict,
-                   settings: Settings):
+def _build_context(tool_name: str, targets: list[str], policy: Policy, options: dict, settings: Settings):
     from ..integrations.tools.base import StepContext
 
     extra: dict = {}

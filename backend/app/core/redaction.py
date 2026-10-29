@@ -20,7 +20,10 @@ _PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     ("aws_secret", re.compile(r"(?i)aws_secret_access_key[\"']?\s*[:=]\s*[\"'][^\"'\r\n]{8,}[\"']")),
     ("github_token", re.compile(r"\bgh[pousr]_[A-Za-z0-9]{20,}\b")),
     ("private_key", re.compile(r"-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----")),
-    ("generic_api_key", re.compile(r"(?i)\b(api[_-]?key|apikey|token|secret|password)[\"']?\s*[:=]\s*[\"'][^\"'\r\n]{6,}[\"']")),
+    (
+        "generic_api_key",
+        re.compile(r"(?i)\b(api[_-]?key|apikey|token|secret|password)[\"']?\s*[:=]\s*[\"'][^\"'\r\n]{6,}[\"']"),
+    ),
 ]
 
 # Patterns applied only to well-formed header dicts, per-name:

@@ -9,8 +9,8 @@ from ..core.audit import AuditService
 from ..core.errors import ApiError, ErrorCode
 from ..db.models import JobStatus, ScanJob
 from ..domain.scope import Policy
-from ..jobs.profiles import CURATED_TEMPLATES, PROFILES, resolve_profile
-from .programs import current_policy, latest_policy_version
+from ..jobs.profiles import PROFILES, resolve_profile
+from .programs import current_policy
 
 
 def validate_targets(policy: Policy, targets: list[str]) -> None:
@@ -28,12 +28,19 @@ def validate_targets(policy: Policy, targets: list[str]) -> None:
 
 
 def running_job_count(db: Session, program_id: str) -> int:
-    return db.scalar(
-        select(ScanJob.id).where(
-            ScanJob.program_id == program_id,
-            ScanJob.status.in_([JobStatus.queued.value, JobStatus.running.value]),
-        ).limit(1)
-    ) is not None and 1 or 0
+    return (
+        db.scalar(
+            select(ScanJob.id)
+            .where(
+                ScanJob.program_id == program_id,
+                ScanJob.status.in_([JobStatus.queued.value, JobStatus.running.value]),
+            )
+            .limit(1)
+        )
+        is not None
+        and 1
+        or 0
+    )
 
 
 def create_scan_job(
@@ -48,7 +55,7 @@ def create_scan_job(
 ) -> ScanJob:
     if profile not in PROFILES:
         raise ApiError(ErrorCode.VALIDATION, f"Unknown profile: {profile}")
-    spec = resolve_profile(profile, templates)
+    resolve_profile(profile, templates)  # validates curated template selection
 
     policy = current_policy(db, program_of(db, program_id))
     validate_targets(policy, targets or [])
@@ -82,9 +89,13 @@ def create_scan_job(
     db.add(job)
     db.flush()
     AuditService.record(
-        db, "scan.created", "scan_job", job.id,
+        db,
+        "scan.created",
+        "scan_job",
+        job.id,
         after={"profile": profile, "dry_run": dry_run},
-        actor_id=actor_id, ip=ip,
+        actor_id=actor_id,
+        ip=ip,
     )
     db.commit()
     return job

@@ -42,9 +42,7 @@ def test_register_then_bootstrap_status(client):
 
 def test_second_registration_rejected(client):
     register_user(client)
-    resp = client.post(
-        "/api/v1/auth/register", json={"username": "tester2", "password": "x" * 12}
-    )
+    resp = client.post("/api/v1/auth/register", json={"username": "tester2", "password": "x" * 12})
     assert resp.status_code == 403
     assert resp.json()["error"]["code"] == "FORBIDDEN"
 
@@ -57,9 +55,7 @@ def test_login_me_logout(client):
     assert resp.status_code == 200
     assert resp.json()["username"] == "tester"
 
-    logout = client.post(
-        "/api/v1/auth/logout", headers={"X-CSRF-Token": me["csrf_token"]}
-    )
+    logout = client.post("/api/v1/auth/logout", headers={"X-CSRF-Token": me["csrf_token"]})
     assert logout.status_code == 200
 
     resp = client.get("/api/v1/auth/me")
@@ -69,9 +65,7 @@ def test_login_me_logout(client):
 def test_login_wrong_password(client):
     register_user(client)
     client.post("/api/v1/auth/logout", headers={})
-    resp = client.post(
-        "/api/v1/auth/login", json={"username": "tester", "password": "wrong-password"}
-    )
+    resp = client.post("/api/v1/auth/login", json={"username": "tester", "password": "wrong-password"})
     assert resp.status_code == 401
 
 

@@ -51,10 +51,7 @@ def _out(db, card: ResearchCard) -> ResearchCardOut:
         next_action=card.next_action,
         priority_score=card.priority_score,
         priority_factors=card.priority_factors,
-        checklist=[
-            ChecklistItemOut(id=i.id, label=i.label, checked=i.checked, position=i.position)
-            for i in items
-        ],
+        checklist=[ChecklistItemOut(id=i.id, label=i.label, checked=i.checked, position=i.position) for i in items],
         created_at=card.created_at,
         updated_at=card.updated_at,
     )
@@ -75,14 +72,10 @@ def list_cards(
         stmt = stmt.where(ResearchCard.status == status)
     if params.q:
         like = f"%{params.q}%"
-        stmt = stmt.where(
-            or_(ResearchCard.title.ilike(like), ResearchCard.hypothesis.ilike(like))
-        )
+        stmt = stmt.where(or_(ResearchCard.title.ilike(like), ResearchCard.hypothesis.ilike(like)))
     order = ResearchCard.priority_score.desc()
     rows, total = paginate(db, stmt, params.page, params.page_size, order)
-    return Page(
-        items=[_out(db, c) for c in rows], total=total, page=params.page, page_size=params.page_size
-    )
+    return Page(items=[_out(db, c) for c in rows], total=total, page=params.page, page_size=params.page_size)
 
 
 @router.post("/research")
@@ -95,8 +88,12 @@ def create_card(
 ) -> ResearchCardOut:
     if body.template_id:
         card = research_service.instantiate_template(
-            db, parse_uuid(body.template_id), parse_uuid(body.program_id),
-            body.title, body.asset_id, body.endpoint_id,
+            db,
+            parse_uuid(body.template_id),
+            parse_uuid(body.program_id),
+            body.title,
+            body.asset_id,
+            body.endpoint_id,
         )
     else:
         card = ResearchCard(
@@ -177,13 +174,9 @@ def delete_card(
 def card_history(card_id: str, db=Depends(get_db), user: User = Depends(get_current_user)) -> list[dict]:
     card = research_service.get_card(db, parse_uuid(card_id))
     rows = db.scalars(
-        select(CardStatusHistory)
-        .where(CardStatusHistory.card_id == card.id)
-        .order_by(CardStatusHistory.changed_at)
+        select(CardStatusHistory).where(CardStatusHistory.card_id == card.id).order_by(CardStatusHistory.changed_at)
     ).all()
-    return [
-        {"from": h.from_status, "to": h.to_status, "at": h.changed_at.isoformat()} for h in rows
-    ]
+    return [{"from": h.from_status, "to": h.to_status, "at": h.changed_at.isoformat()} for h in rows]
 
 
 @router.post("/research/{card_id}/checklist")
@@ -196,11 +189,14 @@ def add_checklist_item(
     _: None = Depends(require_csrf),
 ) -> ChecklistItemOut:
     card = research_service.get_card(db, parse_uuid(card_id))
-    position = db.scalar(
-        select(__import__("sqlalchemy").func.count())
-        .select_from(ChecklistItem)
-        .where(ChecklistItem.card_id == card.id)
-    ) or 0
+    position = (
+        db.scalar(
+            select(__import__("sqlalchemy").func.count())
+            .select_from(ChecklistItem)
+            .where(ChecklistItem.card_id == card.id)
+        )
+        or 0
+    )
     item = ChecklistItem(card_id=card.id, label=body.get("label", ""), position=position)
     db.add(item)
     db.commit()
@@ -248,10 +244,7 @@ def delete_checklist_item(
 @router.get("/research-templates")
 def list_templates(db=Depends(get_db), user: User = Depends(get_current_user)) -> list[TemplateOut]:
     templates = research_service.default_templates(db)
-    return [
-        TemplateOut(id=t.id, name=t.name, body=t.body or {}, created_at=t.created_at)
-        for t in templates
-    ]
+    return [TemplateOut(id=t.id, name=t.name, body=t.body or {}, created_at=t.created_at) for t in templates]
 
 
 @router.post("/research-templates")

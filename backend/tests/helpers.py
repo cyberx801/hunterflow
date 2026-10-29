@@ -15,9 +15,7 @@ def register_user(client, username: str = "tester", password: str = "correct-hor
 
 
 def login(client, username: str, password: str) -> dict:
-    resp = client.post(
-        "/api/v1/auth/login", json={"username": username, "password": password}
-    )
+    resp = client.post("/api/v1/auth/login", json={"username": username, "password": password})
     assert resp.status_code == 200, resp.text
     return resp.json()
 
