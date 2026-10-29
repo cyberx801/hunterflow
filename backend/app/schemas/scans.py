@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 
 class ScanCreate(BaseModel):
     program_id: str
-    profile: str = Field(pattern=r"^(passive|light_recon|web_inventory|url_discovery|vuln_checks)$")
+    profile: str = Field(pattern=r"^(passive|light_recon|web_inventory|url_discovery|screenshots|vuln_checks)$")
     targets: list[str] = Field(default_factory=list, max_length=200)
     templates: list[str] = Field(default_factory=list, max_length=50)
     dry_run: bool = False
@@ -58,3 +58,4 @@ class CuratedTemplateOut(BaseModel):
     name: str
     severity: str
     category: str
+

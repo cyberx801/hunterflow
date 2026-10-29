@@ -56,3 +56,26 @@ def test_gau_build_args_and_parse():
         "https://www.example.com/login",
     ]
     assert all(o.kind == "url" for o in observations)
+
+
+def test_httpx_screenshot_args_and_parse():
+    import base64
+
+    from app.integrations.tools.registry import HttpxAdapter
+
+    ctx = StepContext(targets=["http://demo.local:8080"], extra={"screenshots": True})
+    args = HttpxAdapter().build_args(ctx, "/usr/local/bin/httpx")
+    assert "-screenshot" in args
+    assert "-system-chrome" in args
+
+    png = base64.b64encode(b"\x89PNG\r\n\x1a\nfake").decode()
+    line = (
+        '{"url": "http://demo.local:8080", "status_code": 200, "tech": ["nginx"], '
+        f'"screenshot_bytes": "{png}"}}'
+    )
+    observations = list(HttpxAdapter().parse(line.encode(), ctx))
+    kinds = [o.kind for o in observations]
+    assert "screenshot" in kinds
+    shot = next(o for o in observations if o.kind == "screenshot")
+    assert shot.payload["bytes_b64"] == png
+

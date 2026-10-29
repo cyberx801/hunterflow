@@ -7,6 +7,7 @@ from datetime import UTC
 from fastapi import APIRouter, Depends
 from sqlalchemy import or_, select
 
+from ...core.config import get_settings
 from ...db.models import Asset, User
 from ...schemas.inventory import AssetOut, AssetUpdate
 from ...services.assets import asset_priority, counts_for
@@ -30,6 +31,7 @@ def _out(db, asset: Asset) -> AssetOut:
         tech=asset.tech,
         tags=asset.tags,
         notes=asset.notes,
+        screenshot_path=asset.screenshot_path,
         first_seen=asset.first_seen,
         last_seen=asset.last_seen,
         endpoint_count=endpoint_count,
@@ -61,6 +63,7 @@ def _out_batched(db, asset: Asset, endpoint_count: int, card_count: int) -> Asse
         tech=asset.tech,
         tags=asset.tags,
         notes=asset.notes,
+        screenshot_path=asset.screenshot_path,
         first_seen=asset.first_seen,
         last_seen=asset.last_seen,
         endpoint_count=endpoint_count,
@@ -152,3 +155,27 @@ def update_asset(
         asset.notes = body.notes
     db.commit()
     return _out(db, asset)
+
+
+@router.get("/assets/{asset_id}/screenshot")
+def get_screenshot(
+    asset_id: str,
+    db=Depends(get_db),
+    user: User = Depends(get_current_user),
+    settings=Depends(get_settings),
+):
+    from pathlib import Path
+
+    from fastapi.responses import FileResponse
+
+    from ...core.errors import ApiError, ErrorCode
+
+    asset = db.get(Asset, parse_uuid(asset_id))
+    if asset is None or not asset.screenshot_path:
+        raise ApiError(ErrorCode.NOT_FOUND, "Screenshot not available", 404)
+    path = Path(asset.screenshot_path).resolve()
+    data_root = settings.data_dir.resolve()
+    if not str(path).startswith(str(data_root)) or not path.exists():
+        raise ApiError(ErrorCode.NOT_FOUND, "Screenshot file missing", 404)
+    return FileResponse(path, media_type="image/png", filename=f"{asset.id}.png")
+

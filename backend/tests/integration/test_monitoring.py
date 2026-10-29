@@ -333,3 +333,69 @@ class TestScheduler:
         db.commit()
         with patch("app.jobs.actors.enqueue_scan", return_value=None):
             assert run_due_schedules(db, settings) == 0
+
+def test_changed_status_and_tech_events(db, client):
+    me, program = _setup(client)
+    job = _new_job(db, program["id"])
+    run = ToolRun(scan_job_id=job.id, tool="httpx", args=[], timeout_seconds=60)
+    db.add(run)
+    db.flush()
+    from app.db.models import Asset, AssetObservation
+
+    asset = Asset(
+        program_id=program["id"], type="url", value_normalized="http://demo.local:8080/",
+        value_original="http://demo.local:8080/", scope_status="in_scope", http_status=403,
+    )
+    db.add(asset)
+    db.flush()
+    db.add(AssetObservation(
+        program_id=program["id"], tool_run_id=run.id, normalized_to=asset.id,
+        raw={"kind": "web_probe", "url": asset.value_normalized, "previous_http_status": 200,
+             "new_http_status": 403, "previous_tech": ["nginx"], "new_tech": ["nginx", "react"]},
+    ))
+    db.commit()
+
+    events = finalize_scan_changes(db, job)
+    kinds = [e.kind for e in events]
+    assert kinds.count("changed_asset") == 2
+    fields = {e.detail.get("field") for e in events if e.kind == "changed_asset"}
+    assert fields == {"http_status", "tech"}
+
+
+def test_new_js_file_event(db, client):
+    me, program = _setup(client)
+    job = _new_job(db, program["id"])
+    run = ToolRun(scan_job_id=job.id, tool="katana", args=[], timeout_seconds=60)
+    db.add(run)
+    db.flush()
+    from app.db.models import Asset, Endpoint, EndpointObservation
+
+    asset = Asset(
+        program_id=program["id"], type="url", value_normalized="http://demo.local:8080/app.js",
+        value_original="http://demo.local:8080/app.js", scope_status="in_scope",
+    )
+    db.add(asset)
+    db.flush()
+    ep = Endpoint(
+        program_id=program["id"], asset_id=asset.id, method="GET", path="/app.js",
+        category="file", content_types=["application/javascript"],
+    )
+    db.add(ep)
+    db.flush()
+    db.add(EndpointObservation(endpoint_id=ep.id, tool_run_id=run.id, raw={"url": "http://demo.local:8080/app.js"}))
+    db.commit()
+
+    events = finalize_scan_changes(db, job)
+    assert [e.kind for e in events] == ["new_js_file"]
+
+
+def _new_job(db, program_id: str):
+    from app.db.models import ScanJob
+
+    job = ScanJob(
+        program_id=program_id, profile="web_inventory", status="completed",
+        started_at=datetime.now(UTC), finished_at=datetime.now(UTC),
+    )
+    db.add(job)
+    db.flush()
+    return job

@@ -172,6 +172,7 @@ class Asset(Base, TimestampMixin):
     tags: Mapped[list | None] = mapped_column(JSONVariant, nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     missed_scans: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    screenshot_path: Mapped[str | None] = mapped_column(String(1024), nullable=True)
     first_seen: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
     last_seen: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow, onupdate=utcnow, nullable=False

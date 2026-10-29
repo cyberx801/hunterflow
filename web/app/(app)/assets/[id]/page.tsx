@@ -88,6 +88,22 @@ export default function AssetDetailPage({ params }: { params: { id: string } }) 
           </CardContent>
         </Card>
       </div>
+
+      {asset.screenshot_path && (
+        <Card className="mt-4">
+          <CardHeader>
+            <h2 className="text-sm font-semibold text-text-primary">Screenshot</h2>
+          </CardHeader>
+          <CardContent>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={`/api/v1/assets/${asset.id}/screenshot`}
+              alt={`Screenshot of ${asset.value_normalized}`}
+              className="max-h-[520px] w-auto rounded border border-border"
+            />
+          </CardContent>
+        </Card>
+      )}
     </>
   );
 }

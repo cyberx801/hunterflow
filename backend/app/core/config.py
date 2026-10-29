@@ -42,6 +42,9 @@ class Settings(BaseSettings):
     scheduler_interval_seconds: int = 45
     min_schedule_minutes: int = 15
 
+    # Optional screenshot support (requires an image built with WITH_SCREENSHOTS=1).
+    screenshots_enabled: bool = False
+
     # Multi-user
     allow_registration: bool = False
 

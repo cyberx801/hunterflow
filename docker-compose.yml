@@ -46,6 +46,7 @@ services:
       HF_WEBHOOK_URL: ${HF_WEBHOOK_URL:-}
       HF_SCHEDULER_INTERVAL_SECONDS: ${HF_SCHEDULER_INTERVAL_SECONDS:-45}
       HF_MIN_SCHEDULE_MINUTES: ${HF_MIN_SCHEDULE_MINUTES:-15}
+      HF_SCREENSHOTS_ENABLED: ${HF_WITH_SCREENSHOTS:-0}
       HF_ALLOW_REGISTRATION: ${HF_ALLOW_REGISTRATION:-false}
       HF_AI_ENABLED: ${HF_AI_ENABLED:-false}
       HF_AI_BASE_URL: ${HF_AI_BASE_URL:-http://host.docker.internal:11434/v1}
@@ -74,6 +75,8 @@ services:
   worker:
     build:
       context: ./backend
+      args:
+        WITH_SCREENSHOTS: ${HF_WITH_SCREENSHOTS:-0}
     restart: unless-stopped
     environment:
       <<: *hf-env
@@ -151,3 +154,4 @@ networks:
 volumes:
   pgdata:
   evidence:
+

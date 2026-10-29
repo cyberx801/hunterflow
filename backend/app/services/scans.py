@@ -56,6 +56,15 @@ def create_scan_job(
 ) -> ScanJob:
     if profile not in PROFILES:
         raise ApiError(ErrorCode.VALIDATION, f"Unknown profile: {profile}")
+    if profile == "screenshots":
+        from ..core.config import get_settings
+
+        if not get_settings().screenshots_enabled:
+            raise ApiError(
+                ErrorCode.BAD_STATE,
+                "Screenshot support is not enabled in this image. Build the worker with "
+                "WITH_SCREENSHOTS=1 (HF_WITH_SCREENSHOTS=1) and set HF_SCREENSHOTS_ENABLED=true.",
+            )
     resolve_profile(profile, templates)  # validates curated template selection
 
     policy = current_policy(db, program_of(db, program_id))

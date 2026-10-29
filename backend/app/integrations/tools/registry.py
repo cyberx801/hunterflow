@@ -131,10 +131,12 @@ class HttpxAdapter:
         ]
         # httpx does not follow redirects unless -follow-redirects is passed;
         # out-of-scope redirect following is prohibited, so we never enable it.
+        if ctx.extra.get("screenshots"):
+            args += ["-screenshot", "-system-chrome"]
         if ctx.rate_limit:
             args += ["-rl", str(ctx.rate_limit)]
         for target in ctx.targets:
-            args.append(target)
+            args += ["-u", target]
         return args
 
     def parse(self, stdout: bytes, ctx: StepContext) -> Iterable[Observation]:
@@ -161,6 +163,13 @@ class HttpxAdapter:
                 },
                 source=self.name,
             )
+            screenshot = data.get("screenshot_bytes")
+            if screenshot:
+                yield Observation(
+                    kind="screenshot",
+                    payload={"url": url, "bytes_b64": screenshot},
+                    source=self.name,
+                )
 
 
 class GauAdapter:
@@ -329,3 +338,4 @@ def get_adapter(name: str) -> ToolAdapter:
     if adapter is None:
         raise KeyError(f"Unknown tool adapter: {name}")
     return adapter
+

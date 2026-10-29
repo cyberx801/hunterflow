@@ -126,6 +126,26 @@ The container already resolves `host.docker.internal` (compose adds the host-gat
 entry). If the endpoint is unreachable the assistant returns an error; the rest of the
 application is unaffected. No paid API is required.
 
+## Optional screenshots
+
+The default worker image has no browser. To enable screenshots, build the worker with the
+screenshot argument and enable the feature:
+
+```env
+HF_WITH_SCREENSHOTS=1
+```
+
+```bash
+docker compose build worker
+docker compose up -d worker api
+```
+
+This installs Debian's Chromium in the worker image (about 1 GB larger). The Screenshots
+profile then captures in-scope pages; PNGs are stored on the data volume and served only
+through the authenticated asset endpoint. `HF_SCREENSHOTS_ENABLED` is derived from
+`HF_WITH_SCREENSHOTS` in the compose file.
+
+
 
 ## Troubleshooting
 

@@ -71,3 +71,43 @@ def test_passive_url_creates_url_asset(client, db):
     assert url_asset is not None
     assert url_asset.value_normalized == "https://api.example.com/v1/orders?id=1"
     assert url_asset.scope_status == "in_scope"
+
+def test_screenshot_ingestion_and_endpoint(client, db, settings):
+    import base64
+    from pathlib import Path
+
+    program, policy = _program(client, db)
+    ingest(
+        db,
+        program,
+        Observation(
+            kind="web_probe",
+            payload={"url": "http://demo.local:8080/", "status_code": 200, "tech": []},
+            source="httpx",
+        ),
+        policy,
+    )
+    db.commit()
+    png = base64.b64encode(b"\x89PNG\r\n\x1a\n" + b"0" * 32).decode()
+    ingest(
+        db,
+        program,
+        Observation(
+            kind="screenshot",
+            payload={"url": "http://demo.local:8080/", "bytes_b64": png},
+            source="httpx",
+        ),
+        policy,
+        settings=settings,
+    )
+    db.commit()
+
+    asset = db.scalar(select(Asset).where(Asset.type == "url"))
+    assert asset is not None
+    assert asset.screenshot_path
+    assert Path(asset.screenshot_path).exists()
+
+    assert client.get(f"/api/v1/assets/{asset.id}/screenshot").status_code == 200
+    client.cookies.clear()
+    assert client.get(f"/api/v1/assets/{asset.id}/screenshot").status_code == 401
+

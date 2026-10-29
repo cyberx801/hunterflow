@@ -32,9 +32,10 @@ before you rely on it.
   authenticated endpoint.
 - **Reports.** Markdown, JSON, HTML. Every report states whether the finding was verified.
   Nothing is submitted anywhere automatically.
-- **Continuous monitoring.** Scheduled scans per program with change detection: new assets
-  and endpoints, and removals only after two consecutive misses. Optional webhook
-  notifications (Discord/Slack), opt-in per schedule.
+- **Continuous monitoring.** Scheduled scans per program with change detection: new assets,
+  new endpoints, new JavaScript files, HTTP status and technology changes, and removals only
+  after two consecutive misses. Optional webhook notifications (Discord/Slack), opt-in per
+  schedule.
 - **PDF reports.** Findings export to Markdown, JSON, HTML and PDF, always with the
   verification banner.
 - **Team workspace.** Multiple accounts sharing one workspace; the first account is the
@@ -43,6 +44,9 @@ before you rely on it.
 - **Optional AI assistant.** Off by default. Works with any OpenAI-compatible endpoint
   (local Ollama by default), only reads the page you open, has no tool access, and its
   output is labeled as advisory.
+- **Optional screenshots.** Build the worker with `HF_WITH_SCREENSHOTS=1` and run the
+  Screenshots profile to capture pages; images are stored on the data volume and served
+  through an authenticated endpoint.
 
 ## Requirements
 
@@ -183,7 +187,7 @@ More detail in [`docs/development.md`](docs/development.md) and
 ## Tests
 
 ```
-backend: 165 passed (unit, integration, security)
+backend: 169 passed (unit, integration, security)
 e2e:     6 passed (Playwright, critical journeys)
 lint:    ruff clean, tsc clean
 ```
@@ -210,7 +214,7 @@ redaction, and evidence isolation. See [`specs/testing-strategy.md`](specs/testi
 - Single user, no teams or roles yet.
 - Removal detection is heuristic (two consecutive misses); treat "removed" as a prompt to
   re-check, not as fact.
-- No continuous proxy capture and no automatic screenshot capture yet.
+- No continuous proxy capture.
 - See [`docs/known-issues.md`](docs/known-issues.md) for the current list.
 
 ## Roadmap
@@ -219,10 +223,12 @@ redaction, and evidence isolation. See [`specs/testing-strategy.md`](specs/testi
 - v0.2 - monitoring: schedules, change detection, webhook notifications (done).
 - v0.2.1 - dnsx and gau adapters, passive URL discovery profile (done).
 - v0.3 - PDF reports, optional AI assistant, team workspace with admin user management (done).
-- Next - deeper tool coverage, richer change detection, optional screenshot capture.
+- v0.4 - richer change detection (status/tech changes, new JS files) and optional screenshots (done).
+- Next - continuous proxy capture, more integrations.
 
 ## License
 
 MIT. See [`LICENSE`](LICENSE).
+
 
 

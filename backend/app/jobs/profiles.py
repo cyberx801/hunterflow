@@ -41,6 +41,11 @@ PROFILES: dict[str, dict] = {
             {"tool": "gau", "options": {}},
         ],
     },
+    "screenshots": {
+        "label": "Screenshots",
+        "description": "Capture page screenshots of in-scope URLs. Requires an image built with WITH_SCREENSHOTS=1.",
+        "steps": [{"tool": "httpx", "options": {"screenshots": True}}],
+    },
     "vuln_checks": {
         "label": "Vulnerability Checks",
         "description": "Explicitly selected safe scanner templates only. Requires template selection.",

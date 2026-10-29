@@ -86,7 +86,12 @@ def _get_or_create_asset(
 
 
 def ingest(
-    db: Session, program: Program, observation: Observation, policy: Policy, tool_run_id: str | None = None
+    db: Session,
+    program: Program,
+    observation: Observation,
+    policy: Policy,
+    tool_run_id: str | None = None,
+    settings=None,
 ) -> list[Asset]:
     touched: list[Asset] = []
     kind = observation.kind
@@ -100,8 +105,25 @@ def ingest(
     elif kind == "web_probe":
         url = payload["url"]
         asset = _get_or_create_asset(db, program, AssetKind.URL, normalize_url(url), url, policy, tool_run_id)
+        previous_status = asset.http_status
+        previous_tech = list(asset.tech or [])
         asset.http_status = payload.get("status_code")
         asset.tech = payload.get("tech") or asset.tech
+        db.add(
+            AssetObservation(
+                program_id=program.id,
+                tool_run_id=tool_run_id,
+                raw={
+                    "kind": "web_probe",
+                    "url": url,
+                    "previous_http_status": previous_status,
+                    "new_http_status": asset.http_status,
+                    "previous_tech": previous_tech,
+                    "new_tech": list(asset.tech or []),
+                },
+                normalized_to=asset.id,
+            )
+        )
         touched.append(asset)
 
     elif kind == "endpoint":
@@ -180,6 +202,35 @@ def ingest(
                     )
                 )
         touched.append(host_asset)
+
+    elif kind == "screenshot":
+        import base64
+        import hashlib
+
+        encoded = payload.get("bytes_b64")
+        if not encoded or settings is None:
+            return touched
+        try:
+            data = base64.b64decode(encoded)
+        except (ValueError, TypeError):
+            return touched
+        digest = hashlib.sha256(data).hexdigest()
+        directory = settings.data_dir / "screenshots" / digest[:2]
+        directory.mkdir(parents=True, exist_ok=True)
+        path = directory / f"{digest}.png"
+        if not path.exists():
+            path.write_bytes(data)
+        url = payload.get("url") or ""
+        asset = db.scalar(
+            select(Asset).where(
+                Asset.program_id == program.id,
+                Asset.type == AssetKind.URL,
+                Asset.value_normalized == normalize_url(url),
+            )
+        )
+        if asset is not None:
+            asset.screenshot_path = str(path)
+            touched.append(asset)
 
     elif kind == "scanner_finding":
         existing = db.scalar(

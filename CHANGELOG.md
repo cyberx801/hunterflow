@@ -4,6 +4,22 @@ All notable changes to HunterFlow are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.4.0] - 2026-10-29
+
+### Added
+- Change detection now reports `changed_asset` (HTTP status and technology additions) and
+  `new_js_file` events, with filters in the Monitoring UI.
+- Optional page screenshots: build the worker with `WITH_SCREENSHOTS=1`
+  (`HF_WITH_SCREENSHOTS=1`), enable `HF_SCREENSHOTS_ENABLED`, and run the Screenshots
+  profile. Images are stored on the data volume and served through an authenticated
+  endpoint; asset pages show the capture.
+
+### Changed
+- httpx targets are passed with `-u` (required for reliable screenshot output).
+- Tool runs use a persistent `HOME`/`TMPDIR` under the data volume (needed for the
+  headless browser and avoids noexec tmpfs).
+- Recon httpx steps also include known in-scope URL assets (capped at 200).
+
 ## [0.3.0] - 2026-10-29
 
 ### Added

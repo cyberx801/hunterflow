@@ -97,6 +97,10 @@ def _step_targets(db: Session, job: ScanJob, policy: Policy, tool_name: str) -> 
     ).all()
     if tool_name in ("httpx", "katana", "dnsx"):
         hosts = sorted({a.value_normalized for a in rows if a.type in ("subdomain", "domain")})
+        if tool_name == "httpx":
+            # Include known in-scope URLs (needed for screenshots and re-probing).
+            urls = sorted({a.value_normalized for a in rows if a.type == "url"})[:200]
+            return hosts + urls, set()
         return hosts, set()
     if tool_name == "nuclei":
         urls = sorted({a.value_normalized for a in rows if a.type == "url"})
@@ -220,7 +224,14 @@ def run_scan_job(db_factory, settings: Settings, job_id: str) -> None:
                 stdout = result.stdout_path.read_bytes()
                 count = 0
                 for observation in adapter.parse(stdout, ctx):
-                    ingest(db, program_of(db, job), observation, policy, tool_run_id=tool_run.id)
+                    ingest(
+                        db,
+                        program_of(db, job),
+                        observation,
+                        policy,
+                        tool_run_id=tool_run.id,
+                        settings=settings,
+                    )
                     count += 1
                 job.progress = {**job.progress, "done": idx, "items": count}
                 db.commit()
@@ -323,6 +334,8 @@ def _build_context(
     extra: dict = {}
     if tool_name in ("httpx", "katana", "nuclei"):
         extra["no_follow_redirects"] = True
+    if tool_name == "httpx" and options.get("screenshots") and settings.screenshots_enabled:
+        extra["screenshots"] = True
     if tool_name == "nuclei":
         extra["templates"] = options.get("templates") or []
         extra["no_interactsh"] = True

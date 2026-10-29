@@ -94,17 +94,62 @@ def finalize_scan_changes(db: Session, job: ScanJob) -> list[MonitoringEvent]:
             if len(events) >= MAX_NEW_EVENTS_PER_RUN:
                 break
             if ensure_utc(endpoint.first_seen) >= started - timedelta(seconds=1):
+                is_js = endpoint.path.lower().endswith(".js") or any(
+                    "javascript" in str(ct).lower() for ct in (endpoint.content_types or [])
+                )
                 events.append(
                     MonitoringEvent(
                         program_id=job.program_id,
                         scan_job_id=job.id,
-                        kind="new_endpoint",
+                        kind="new_js_file" if is_js else "new_endpoint",
                         entity_type="endpoint",
                         entity_id=endpoint.id,
                         entity_value=f"{endpoint.method} {endpoint.path}",
                         detail={"category": endpoint.category},
                     )
                 )
+
+    # Status / technology changes observed during this run (httpx).
+    change_rows = db.scalars(
+        select(AssetObservation)
+        .join(ToolRun, AssetObservation.tool_run_id == ToolRun.id)
+        .where(ToolRun.scan_job_id == job.id)
+    ).all()
+    for obs in change_rows:
+        if len(events) >= MAX_NEW_EVENTS_PER_RUN:
+            break
+        raw = obs.raw or {}
+        if raw.get("kind") != "web_probe":
+            continue
+        prev_status = raw.get("previous_http_status")
+        new_status = raw.get("new_http_status")
+        if prev_status is not None and new_status is not None and prev_status != new_status:
+            events.append(
+                MonitoringEvent(
+                    program_id=job.program_id,
+                    scan_job_id=job.id,
+                    kind="changed_asset",
+                    entity_type="asset",
+                    entity_id=obs.normalized_to,
+                    entity_value=str(raw.get("url") or ""),
+                    detail={"field": "http_status", "from": prev_status, "to": new_status},
+                )
+            )
+        prev_tech = {str(t) for t in (raw.get("previous_tech") or [])}
+        new_tech = {str(t) for t in (raw.get("new_tech") or [])}
+        added = sorted(new_tech - prev_tech)
+        if added:
+            events.append(
+                MonitoringEvent(
+                    program_id=job.program_id,
+                    scan_job_id=job.id,
+                    kind="changed_asset",
+                    entity_type="asset",
+                    entity_id=obs.normalized_to,
+                    entity_value=str(raw.get("url") or ""),
+                    detail={"field": "tech", "added": added},
+                )
+            )
 
     if job.schedule_id:
         covered = PROFILE_ASSET_TYPES.get(job.profile, set())
@@ -171,7 +216,7 @@ def notify_changes(
         counts[event.kind] = counts.get(event.kind, 0) + 1
     summary = ", ".join(f"{kind.replace('_', ' ')}: {count}" for kind, count in sorted(counts.items()))
 
-    highlights = [e.entity_value for e in events if e.kind in ("new_asset", "new_endpoint", "removed_asset")][
+    highlights = [e.entity_value for e in events if e.kind in ("new_asset", "new_endpoint", "new_js_file", "changed_asset", "removed_asset")][
         :10
     ]
     lines = [
@@ -238,3 +283,4 @@ def run_due_schedules(db: Session, settings: Settings) -> int:
         enqueued += 1
 
     return enqueued
+

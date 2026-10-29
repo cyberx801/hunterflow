@@ -42,6 +42,13 @@ FROM base AS app
 WORKDIR /srv/hunterflow
 ENV UV_PROJECT_ENVIRONMENT=/venv
 
+# Optional screenshot support: set WITH_SCREENSHOTS=1 at build time.
+ARG WITH_SCREENSHOTS=0
+RUN if [ "$WITH_SCREENSHOTS" = "1" ]; then \
+      apt-get update && apt-get install -y --no-install-recommends chromium fonts-liberation \
+      && rm -rf /var/lib/apt/lists/*; \
+    fi
+
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev
 

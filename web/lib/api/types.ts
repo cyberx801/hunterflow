@@ -48,6 +48,7 @@ export interface Asset {
   tech: string[] | null;
   tags: string[] | null;
   notes: string | null;
+  screenshot_path: string | null;
   first_seen: string;
   last_seen: string;
   endpoint_count: number;
@@ -322,4 +323,5 @@ export interface UserAccount {
   is_active: boolean;
   created_at: string;
 }
+
 

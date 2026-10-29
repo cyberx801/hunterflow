@@ -53,3 +53,6 @@
 
 | C3 | 2026-10-29 | v0.3: PDF reports, optional AI assistant (OpenAI-compatible, disabled by default), team workspace with admin user management | Owner instruction to add AI via API and the remaining roadmap items | Additive; AI has no tool access and is advisory only; users share one workspace (no per-user isolation) |
 
+
+| C4 | 2026-10-29 | v0.4: richer change detection (status/tech, new JS files) and optional screenshot support (separate build arg, chromium image) | Owner instruction | Additive; screenshots are opt-in, stored on the data volume, served only through an authenticated endpoint |
+

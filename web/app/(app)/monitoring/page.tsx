@@ -44,13 +44,17 @@ import type { Schedule } from "@/lib/api/types";
 const KIND_LABEL: Record<string, string> = {
   new_asset: "new asset",
   new_endpoint: "new endpoint",
+  new_js_file: "new JS file",
+  changed_asset: "changed asset",
   possibly_removed_asset: "possibly removed",
   removed_asset: "removed",
 };
 
-function kindTone(kind: string): "success" | "info" | "warning" | "danger" | "muted" {
+function kindTone(kind: string): "success" | "info" | "warning" | "danger" | "muted" | "accent" {
   if (kind === "new_asset") return "success";
   if (kind === "new_endpoint") return "info";
+  if (kind === "new_js_file") return "accent";
+  if (kind === "changed_asset") return "warning";
   if (kind === "possibly_removed_asset") return "warning";
   if (kind === "removed_asset") return "danger";
   return "muted";
@@ -307,6 +311,8 @@ export default function MonitoringPage() {
                 <SelectItem value="all">All changes</SelectItem>
                 <SelectItem value="new_asset">New assets</SelectItem>
                 <SelectItem value="new_endpoint">New endpoints</SelectItem>
+                <SelectItem value="new_js_file">New JS files</SelectItem>
+                <SelectItem value="changed_asset">Changed assets</SelectItem>
                 <SelectItem value="possibly_removed_asset">Possibly removed</SelectItem>
                 <SelectItem value="removed_asset">Removed</SelectItem>
               </SelectContent>

@@ -18,6 +18,7 @@ class AssetOut(BaseModel):
     tech: list | None
     tags: list | None
     notes: str | None
+    screenshot_path: str | None = None
     first_seen: datetime
     last_seen: datetime
     endpoint_count: int = 0

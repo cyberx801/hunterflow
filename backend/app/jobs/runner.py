@@ -31,10 +31,13 @@ class ToolRunResult:
     duration_seconds: float
 
 
-def _safe_env() -> dict[str, str]:
+def _safe_env(settings: Settings) -> dict[str, str]:
+    home = settings.data_dir / "home"
+    tmp = settings.data_dir / "tmp"
     return {
         "PATH": os.environ.get("PATH", "/usr/local/bin:/usr/bin:/bin"),
-        "HOME": "/tmp",
+        "HOME": str(home),
+        "TMPDIR": str(tmp),
         "LANG": "C.UTF-8",
     }
 
@@ -64,13 +67,15 @@ class ToolRunner:
     ) -> ToolRunResult:
         timeout_seconds = timeout_seconds or self.settings.tool_timeout_seconds
         run_dir.mkdir(parents=True, exist_ok=True)
+        (self.settings.data_dir / "home").mkdir(parents=True, exist_ok=True)
+        (self.settings.data_dir / "tmp").mkdir(parents=True, exist_ok=True)
         stdout_path = run_dir / "stdout.txt"
         stderr_path = run_dir / "stderr.txt"
         start = time.monotonic()
         kwargs: dict = {
             "stdin": subprocess.DEVNULL,
             "cwd": str(run_dir),
-            "env": _safe_env(),
+            "env": _safe_env(self.settings),
         }
         if os.name != "nt":
             kwargs["start_new_session"] = True
@@ -146,3 +151,4 @@ def _too_large(path: Path) -> bool:
         return path.stat().st_size > MAX_OUTPUT_BYTES
     except OSError:
         return False
+

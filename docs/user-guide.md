@@ -27,6 +27,7 @@ Use **scope preview** to test candidate targets, then **publish a policy version
 - **Light Recon** — adds DNS resolution (`dnsx`) and HTTP probing (`httpx`).
 - **Web Inventory** — adds passive URL discovery (`gau`) and authorized crawling (`katana`).
 - **Passive URL Discovery** — subdomain enumeration plus historical URLs from public sources; no requests to targets.
+- **Screenshots** — captures pages of in-scope URLs. Requires an image built with `WITH_SCREENSHOTS=1`; images appear on the asset page.
 - **Vulnerability Checks** — curated `nuclei` templates only, explicitly selected.
 
 Optionally restrict targets (must be in scope) or run a **dry run**. Watch progress in the top bar; open the job for per-tool arguments and output (secrets redacted).

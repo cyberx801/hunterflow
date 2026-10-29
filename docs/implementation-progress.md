@@ -1,7 +1,7 @@
 # HunterFlow — Implementation Progress
 
 - **Updated:** 2026-10-29
-- **Status:** v0.3 (workspace + monitoring + dnsx/gau + PDF, AI assist, team users)
+- **Status:** v0.4 (workspace + monitoring + dnsx/gau + PDF, AI assist, team users, optional screenshots)
 
 ## Gates & Baseline
 
@@ -23,7 +23,7 @@
 
 | Suite | Result |
 |---|---|
-| Backend unit + integration + security (pytest) | 165 passed |
+| Backend unit + integration + security (pytest) | 169 passed |
 | Frontend typecheck (`tsc --noEmit`) | clean |
 | Frontend build (`next build`) | success |
 | Playwright E2E (`workflows.spec.ts`) | 6 passed |
@@ -47,3 +47,8 @@ no log rotation by default.
 
 No incomplete v0.1/v0.2 tasks. Post-roadmap: v0.3 optional local AI assistant, v0.4
 multi-user collaboration.
+
+
+| Screenshot profile (Docker, WITH_SCREENSHOTS=1) | completed: httpx captured a PNG, asset serves it via the authenticated endpoint |
+| Change detection | unit/integration tests for changed_asset and new_js_file |
+
