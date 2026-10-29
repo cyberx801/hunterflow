@@ -67,6 +67,8 @@ Open http://localhost:3000.
 HunterFlow is single-user. On the very first launch there are no accounts, so the login page
 shows a **Create account** form instead of a sign-in form:
 
+![First-run account creation](docs/screenshots/first-run-account.png)
+
 1. Pick a username.
 2. Pick a password of at least 12 characters.
 3. Submit. You are logged in and land on the Overview page.
