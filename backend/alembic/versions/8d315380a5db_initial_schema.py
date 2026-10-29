@@ -1,8 +1,8 @@
 """initial schema
 
-Revision ID: a4c4446c077e
+Revision ID: 8d315380a5db
 Revises: 
-Create Date: 2026-10-29 03:48:06.175175
+Create Date: 2026-10-29 10:27:21.128675
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 import app.db.base  # noqa: F401 (binds custom types GUID/JSONVariant)
 
 
-revision: str = 'a4c4446c077e'
+revision: str = '8d315380a5db'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -354,6 +354,8 @@ def upgrade() -> None:
     sa.Column('redacted', sa.Boolean(), nullable=False),
     sa.Column('hash', sa.String(length=64), nullable=False),
     sa.Column('endpoint_id', app.db.base.GUID(length=36), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
     sa.ForeignKeyConstraint(['endpoint_id'], ['endpoints.id'], ),
     sa.ForeignKeyConstraint(['program_id'], ['programs.id'], ),
     sa.PrimaryKeyConstraint('id')

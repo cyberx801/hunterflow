@@ -41,10 +41,11 @@ export default function ProgramsPage() {
         }),
         csrf,
       }),
-    onSuccess: () => {
+    onSuccess: (program) => {
       queryClient.invalidateQueries({ queryKey: ["programs"] });
       setOpen(false);
       form.reset();
+      router.push(`/programs/${program.id}`);
     },
   });
 

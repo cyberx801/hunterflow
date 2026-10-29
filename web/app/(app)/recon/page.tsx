@@ -172,6 +172,7 @@ export default function ReconPage() {
           {jobs.map((job) => (
             <Card key={job.id} className="p-0">
               <button
+                data-job-id={job.id}
                 className="flex w-full items-center justify-between gap-4 px-4 py-3 text-left"
                 onClick={() => router.push(`/recon/jobs/${job.id}`)}
               >

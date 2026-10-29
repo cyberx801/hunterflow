@@ -78,12 +78,15 @@ export default function ResearchPage() {
               <form className="space-y-3" onSubmit={form.handleSubmit((v) => create.mutate(v))}>
                 <div className="space-y-1.5">
                   <Label>Template (optional)</Label>
-                  <Select value={templateId} onValueChange={setTemplateId}>
+                  <Select
+                    value={templateId || "none"}
+                    onValueChange={(v) => setTemplateId(v === "none" ? "" : v)}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="No template" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">No template</SelectItem>
+                      <SelectItem value="none">No template</SelectItem>
                       {(templates ?? []).map((t) => (
                         <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
                       ))}

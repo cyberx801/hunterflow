@@ -56,6 +56,16 @@ def stub_broker(app):
     stub.close()
 
 
+@pytest.fixture(autouse=True)
+def reset_rate_limiter():
+    """Isolate the in-memory login rate limiter between tests."""
+    from app.core.security import get_rate_limiter
+
+    get_rate_limiter().reset_all()
+    yield
+    get_rate_limiter().reset_all()
+
+
 @pytest.fixture()
 def client(app):
     with TestClient(app, raise_server_exceptions=False) as c:

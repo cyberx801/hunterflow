@@ -103,7 +103,16 @@ def create_scan(
         actor_id=user.id,
         ip=request.client.host if request.client else None,
     )
-    enqueue_scan(job.id)
+    if body.dry_run:
+        # Dry-run performs zero tool/network work; execute synchronously so it
+        # works even without a broker (pure planning operation).
+        from ...core.config import get_settings
+        from ...jobs.pipeline import run_scan_job
+
+        factory = request.app.state.session_factory
+        run_scan_job(factory, get_settings(), job.id)
+    else:
+        enqueue_scan(job.id)
     db.refresh(job)
     return _scan_out(job)
 

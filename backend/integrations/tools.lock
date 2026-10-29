@@ -1,0 +1,6 @@
+# HunterFlow pinned external tools (verified 2026-10-29)
+# Format: tool version url sha256 license
+subfinder 2.6.6 https://github.com/projectdiscovery/subfinder/releases/download/v2.6.6/subfinder_2.6.6_linux_amd64.zip 6fda32fe1f5750e63fa07c112b1b615d033e425c6dc6659ed8ec61035eb8eba2 MIT
+httpx 1.6.9 https://github.com/projectdiscovery/httpx/releases/download/v1.6.9/httpx_1.6.9_linux_amd64.zip c8d36461b5d736e88c3f9104fed15f2112eb7263dbda35fd08aa5a771bddfb5f MIT
+katana 1.1.2 https://github.com/projectdiscovery/katana/releases/download/v1.1.2/katana_1.1.2_linux_amd64.zip 710205030c3d07a23d86fe11dac595a3c681ab5fa8daad679c752cbfd4ee0425 MIT
+nuclei 3.3.7 https://github.com/projectdiscovery/nuclei/releases/download/v3.3.7/nuclei_3.3.7_linux_amd64.zip 725ef892fcffd1b03ad4f0874942fc4b623c0419b6b6c6c91fe4a5a65671f77c MIT

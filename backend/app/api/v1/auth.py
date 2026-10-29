@@ -23,6 +23,7 @@ from ...core.security import (
 from ...db.models import Session, User
 from ..deps import (
     SESSION_COOKIE,
+    enforce_account_login_limit,
     enforce_login_rate_limit,
     ensure_utc,
     get_current_user,
@@ -117,6 +118,7 @@ def login(
     db=Depends(get_db),
     settings: Settings = Depends(get_settings),
 ):
+    enforce_account_login_limit(body.username, settings)
     user = db.scalar(select(User).where(User.username == body.username))
     if user is None or not verify_password(body.password, user.password_hash):
         raise ApiError(ErrorCode.UNAUTHORIZED, "Invalid credentials", 401)

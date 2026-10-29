@@ -1,0 +1,108 @@
+name: hunterflow
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: hunterflow
+      POSTGRES_PASSWORD: ${HF_DB_PASSWORD:-hunterflow}
+      POSTGRES_DB: hunterflow
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks: [internal]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hunterflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    security_opt: [no-new-privileges:true]
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    networks: [internal]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    security_opt: [no-new-privileges:true]
+
+  api:
+    build:
+      context: ./backend
+    environment: &hf-env
+      HF_ENV: production
+      HF_SECRET_KEY: ${HF_SECRET_KEY:?set HF_SECRET_KEY in .env (see .env.example)}
+      HF_DATABASE_URL: postgresql+psycopg://hunterflow:${HF_DB_PASSWORD:-hunterflow}@db:5432/hunterflow
+      HF_REDIS_URL: redis://redis:6379/0
+      HF_DATA_DIR: /srv/hunterflow/data
+      HF_BOOTSTRAP_USERNAME: ${HF_BOOTSTRAP_USERNAME:-}
+      HF_BOOTSTRAP_PASSWORD: ${HF_BOOTSTRAP_PASSWORD:-}
+    volumes:
+      - evidence:/srv/hunterflow/data
+    networks: [internal]
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:8000/api/v1/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+    security_opt: [no-new-privileges:true]
+    read_only: true
+    tmpfs: [/tmp, /srv/hunterflow/data/runs]
+
+  worker:
+    build:
+      context: ./backend
+    environment:
+      <<: *hf-env
+      HF_PROCESS: worker
+    volumes:
+      - evidence:/srv/hunterflow/data
+    networks: [internal]
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    security_opt: [no-new-privileges:true]
+    read_only: true
+    tmpfs: [/tmp, /srv/hunterflow/data/runs]
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+  web:
+    build:
+      context: ./web
+    environment:
+      HF_BACKEND_URL: http://api:8000
+    ports:
+      - "${HF_WEB_PORT:-3000}:3000"
+    networks: [internal]
+    depends_on:
+      api:
+        condition: service_healthy
+    security_opt: [no-new-privileges:true]
+
+  demo:
+    build:
+      context: ./demo
+    profiles: [demo]
+    networks: [internal]
+    security_opt: [no-new-privileges:true]
+
+networks:
+  internal:
+    driver: bridge
+
+volumes:
+  pgdata:
+  evidence:

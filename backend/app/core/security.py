@@ -76,6 +76,10 @@ class SlidingWindowRateLimiter:
         with self._lock:
             self._events.pop(key, None)
 
+    def reset_all(self) -> None:
+        with self._lock:
+            self._events.clear()
+
 
 _default_limiter = SlidingWindowRateLimiter()
 

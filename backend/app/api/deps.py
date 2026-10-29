@@ -80,12 +80,26 @@ def require_csrf(request: Request) -> None:
 def enforce_login_rate_limit(
     request: Request, settings: Settings = Depends(get_settings)
 ) -> None:
-    key = f"login:{request.client.host if request.client else 'unknown'}"
+    """IP-based throttle, applied in addition to the per-account limit enforced
+    inside the login handler (see auth.py)."""
+    key = f"login-ip:{request.client.host if request.client else 'unknown'}"
+    limiter = get_rate_limiter()
+    if not limiter.allow(key, max(settings.login_rate_limit_per_minute * 10, 30), 60.0):
+        raise ApiError(
+            ErrorCode.RATE_LIMITED,
+            "Too many login attempts from this address; try again later",
+            429,
+        )
+
+
+def enforce_account_login_limit(username: str, settings: Settings) -> None:
+    """Per-account brute-force throttle (the meaningful control, proxy-safe)."""
+    key = f"login-user:{username.lower()}"
     limiter = get_rate_limiter()
     if not limiter.allow(key, settings.login_rate_limit_per_minute, 60.0):
         raise ApiError(
             ErrorCode.RATE_LIMITED,
-            "Too many login attempts; try again later",
+            "Too many login attempts for this account; try again later",
             429,
         )
 
