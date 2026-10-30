@@ -1,0 +1,8 @@
+# Caddy reverse proxy for HunterFlow. Automatic HTTPS via Let's Encrypt.
+#
+# Set HF_DOMAIN in .env (e.g. hf.example.com). For a bare IP or local test you
+# can use ":80" as the site address, but HTTPS requires a real hostname.
+{$HF_DOMAIN:localhost} {
+	encode zstd gzip
+	reverse_proxy web:3000
+}

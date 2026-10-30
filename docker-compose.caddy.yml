@@ -1,0 +1,27 @@
+# Optional overlay: puts Caddy in front of the web container and terminates TLS.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.caddy.yml up -d
+#
+# Requires HF_DOMAIN in .env and DNS pointing at this server. The web container
+# stays bound to 127.0.0.1; Caddy reaches it over the internal network.
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      HF_DOMAIN: ${HF_DOMAIN:-localhost}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks: [internal]
+    depends_on:
+      - web
+    security_opt: [no-new-privileges:true]
+
+volumes:
+  caddy_data:
+  caddy_config:
