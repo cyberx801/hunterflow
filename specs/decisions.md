@@ -59,3 +59,6 @@
 
 | C5 | 2026-10-29 | v0.5: optional auto draft research cards from monitoring changes; web_crawl profile; katana container resolver | Owner instruction | Additive, opt-in per schedule; auto-created cards require human review and are deduplicated per endpoint |
 
+
+| C6 | 2026-10-29 | v0.6: dependency security upgrades (FastAPI/Starlette/uvicorn, Next/React/zod), security headers, benchmarks, production checklist | Owner instruction to run security/performance tests and prepare go-live | No scope change; login rate limit made configurable for automated tests; Next 16 async params migration |
+

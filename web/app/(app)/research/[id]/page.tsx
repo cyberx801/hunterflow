@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Bug, Link2 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -24,17 +24,18 @@ const NEXT_STATUS: Record<string, string[]> = {
   archived: ["not_started", "in_progress"],
 };
 
-export default function ResearchCardPage({ params }: { params: { id: string } }) {
+export default function ResearchCardPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const router = useRouter();
   const csrf = useCsrfToken();
   const queryClient = useQueryClient();
-  const { data: card, isLoading } = useResearchCard(params.id);
+  const { data: card, isLoading } = useResearchCard(id);
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["research"] });
 
   const transition = useMutation({
     mutationFn: (to: string) =>
-      apiFetch<ResearchCard>(`/api/v1/research/${params.id}/transition`, {
+      apiFetch<ResearchCard>(`/api/v1/research/${id}/transition`, {
         method: "POST",
         body: JSON.stringify({ to }),
         csrf,
@@ -44,7 +45,7 @@ export default function ResearchCardPage({ params }: { params: { id: string } })
 
   const update = useMutation({
     mutationFn: (patch: Record<string, string | null>) =>
-      apiFetch<ResearchCard>(`/api/v1/research/${params.id}`, {
+      apiFetch<ResearchCard>(`/api/v1/research/${id}`, {
         method: "PATCH",
         body: JSON.stringify(patch),
         csrf,
@@ -54,7 +55,7 @@ export default function ResearchCardPage({ params }: { params: { id: string } })
 
   const toggleItem = useMutation({
     mutationFn: ({ itemId, checked }: { itemId: string; checked: boolean }) =>
-      apiFetch(`/api/v1/research/${params.id}/checklist/${itemId}`, {
+      apiFetch(`/api/v1/research/${id}/checklist/${itemId}`, {
         method: "PATCH",
         body: JSON.stringify({ checked }),
         csrf,
@@ -64,7 +65,7 @@ export default function ResearchCardPage({ params }: { params: { id: string } })
 
   const addItem = useMutation({
     mutationFn: (label: string) =>
-      apiFetch(`/api/v1/research/${params.id}/checklist`, {
+      apiFetch(`/api/v1/research/${id}/checklist`, {
         method: "POST",
         body: JSON.stringify({ label }),
         csrf,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { useTransaction } from "@/lib/api/hooks";
@@ -8,9 +8,10 @@ import { Badge, Button, Card, CardContent, CardHeader, Skeleton } from "@/compon
 import { MethodBadge, MonoValue, PageHeader } from "@/components/domain/shared";
 import { formatTime } from "@/lib/utils";
 
-export default function TransactionDetailPage({ params }: { params: { id: string } }) {
+export default function TransactionDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const router = useRouter();
-  const { data: tx, isLoading } = useTransaction(params.id);
+  const { data: tx, isLoading } = useTransaction(id);
 
   if (isLoading || !tx) return <Skeleton className="h-64 w-full" />;
 

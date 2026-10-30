@@ -1,5 +1,7 @@
 "use client";
 
+import { use } from "react";
+
 import { useRouter } from "next/navigation";
 import { AlertTriangle, ArrowLeft } from "lucide-react";
 import { useComparison } from "@/lib/api/hooks";
@@ -7,9 +9,10 @@ import { Badge, Button, Card, CardContent, Skeleton } from "@/components/ui/prim
 import { PageHeader } from "@/components/domain/shared";
 import { cn } from "@/lib/utils";
 
-export default function ComparePage({ params }: { params: { id: string } }) {
+export default function ComparePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const router = useRouter();
-  const { data: cmp, isLoading } = useComparison(params.id);
+  const { data: cmp, isLoading } = useComparison(id);
 
   if (isLoading || !cmp) return <Skeleton className="h-96 w-full" />;
 

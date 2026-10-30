@@ -1,5 +1,7 @@
 "use client";
 
+import { use } from "react";
+
 import { useRouter } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import { useProgram } from "@/lib/api/hooks";
@@ -8,9 +10,10 @@ import { Badge, Button, Skeleton, Tabs, TabsContent, TabsList, TabsTrigger } fro
 import { PageHeader, StatusBadge } from "@/components/domain/shared";
 import { formatTime } from "@/lib/utils";
 
-export default function ProgramWorkspace({ params }: { params: { id: string } }) {
+export default function ProgramWorkspace({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const router = useRouter();
-  const { data: program, isLoading } = useProgram(params.id);
+  const { data: program, isLoading } = useProgram(id);
 
   if (isLoading || !program) {
     return <Skeleton className="h-40 w-full" />;

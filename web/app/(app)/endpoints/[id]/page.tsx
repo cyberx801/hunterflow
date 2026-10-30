@@ -1,5 +1,7 @@
 "use client";
 
+import { use } from "react";
+
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRightLeft, FlaskConical } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -11,15 +13,16 @@ import { formatTime } from "@/lib/utils";
 
 const CATEGORIES = ["auth", "account", "profile", "admin", "file", "payment", "object_access", "resource_mgmt", "api_versioning", "other"];
 
-export default function EndpointDetailPage({ params }: { params: { id: string } }) {
+export default function EndpointDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const router = useRouter();
   const csrf = useCsrfToken();
   const queryClient = useQueryClient();
-  const { data: ep, isLoading } = useEndpoint(params.id);
+  const { data: ep, isLoading } = useEndpoint(id);
 
   const updateCategory = useMutation({
     mutationFn: (category: string) =>
-      apiFetch(`/api/v1/endpoints/${params.id}`, { method: "PATCH", body: JSON.stringify({ category }), csrf }),
+      apiFetch(`/api/v1/endpoints/${id}`, { method: "PATCH", body: JSON.stringify({ category }), csrf }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["endpoints"] }),
   });
 

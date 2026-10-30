@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Copy, Download, FileText, Upload } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -25,12 +25,13 @@ const NEXT: Record<string, string[]> = {
   resolved: ["reported", "under_investigation"],
 };
 
-export default function FindingDetailPage({ params }: { params: { id: string } }) {
+export default function FindingDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const router = useRouter();
   const csrf = useCsrfToken();
   const queryClient = useQueryClient();
-  const { data: finding, isLoading } = useFinding(params.id);
-  const { data: duplicates } = useFindingDuplicates(params.id);
+  const { data: finding, isLoading } = useFinding(id);
+  const { data: duplicates } = useFindingDuplicates(id);
   const [confirmedVerify, setConfirmedVerify] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const [evidence, setEvidence] = useState<Evidence[]>([]);
@@ -42,7 +43,7 @@ export default function FindingDetailPage({ params }: { params: { id: string } }
 
   const transition = useMutation({
     mutationFn: ({ to, confirm }: { to: string; confirm: boolean }) =>
-      apiFetch<Finding>(`/api/v1/findings/${params.id}/transition`, {
+      apiFetch<Finding>(`/api/v1/findings/${id}/transition`, {
         method: "POST",
         body: JSON.stringify({ to, verified_human_confirmation: confirm }),
         csrf,
@@ -52,7 +53,7 @@ export default function FindingDetailPage({ params }: { params: { id: string } }
 
   const update = useMutation({
     mutationFn: (patch: Record<string, string | null>) =>
-      apiFetch<Finding>(`/api/v1/findings/${params.id}`, {
+      apiFetch<Finding>(`/api/v1/findings/${id}`, {
         method: "PATCH",
         body: JSON.stringify(patch),
         csrf,
@@ -65,7 +66,7 @@ export default function FindingDetailPage({ params }: { params: { id: string } }
       const fd = new FormData();
       fd.append("file", file);
       return apiFetch<Evidence>(
-        `/api/v1/evidence?program_id=${finding!.program_id}&finding_id=${params.id}`,
+        `/api/v1/evidence?program_id=${finding!.program_id}&finding_id=${id}`,
         { method: "POST", body: fd, csrf }
       );
     },
@@ -76,7 +77,7 @@ export default function FindingDetailPage({ params }: { params: { id: string } }
     mutationFn: (format: "markdown" | "json" | "html" | "pdf") =>
       apiFetch<Report>("/api/v1/reports", {
         method: "POST",
-        body: JSON.stringify({ finding_id: params.id, format }),
+        body: JSON.stringify({ finding_id: id, format }),
         csrf,
       }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["reports"] }),

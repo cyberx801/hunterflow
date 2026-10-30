@@ -187,7 +187,7 @@ More detail in [`docs/development.md`](docs/development.md) and
 ## Tests
 
 ```
-backend: 174 passed (unit, integration, security)
+backend: 174 passed (unit, integration, security) plus 31 security tests; pip-audit and npm audit clean
 e2e:     6 passed (Playwright, critical journeys)
 lint:    ruff clean, tsc clean
 ```
@@ -225,6 +225,7 @@ redaction, and evidence isolation. See [`specs/testing-strategy.md`](specs/testi
 - v0.3 - PDF reports, optional AI assistant, team workspace with admin user management (done).
 - v0.4 - richer change detection (status/tech changes, new JS files) and optional screenshots (done).
 - v0.5 - auto draft research cards from monitoring changes; web_crawl profile (done).
+- v0.6 - dependency security upgrades, security headers, performance benchmarks, production checklist (done).
 - Next - continuous proxy capture, more integrations.
 
 ## License

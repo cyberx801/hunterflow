@@ -1,7 +1,7 @@
 # HunterFlow — Implementation Progress
 
 - **Updated:** 2026-10-29
-- **Status:** v0.5 (workspace + monitoring + auto draft cards + tooling + PDF, AI assist, team users, optional screenshots)
+- **Status:** v0.6 (workspace + monitoring + tooling + PDF, AI assist, team users, optional screenshots, hardened deps)
 
 ## Gates & Baseline
 
@@ -23,7 +23,7 @@
 
 | Suite | Result |
 |---|---|
-| Backend unit + integration + security (pytest) | 174 passed |
+| Backend unit + integration + security (pytest) | 174 passed (31 security) |
 | Frontend typecheck (`tsc --noEmit`) | clean |
 | Frontend build (`next build`) | success |
 | Playwright E2E (`workflows.spec.ts`) | 6 passed |
@@ -52,3 +52,6 @@ multi-user collaboration.
 | Screenshot profile (Docker, WITH_SCREENSHOTS=1) | completed: httpx captured a PNG, asset serves it via the authenticated endpoint |
 | Change detection | unit/integration tests for changed_asset and new_js_file |
 
+
+| Dependency audits | pip-audit: no known vulnerabilities; npm audit: 0 |
+| Frontend cold load (local) | DCL 34-67 ms, JS 189-242 KB per page |

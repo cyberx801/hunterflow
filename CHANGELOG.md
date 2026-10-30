@@ -4,6 +4,26 @@ All notable changes to HunterFlow are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.6.0] - 2026-10-29
+
+### Security
+- Upgraded FastAPI 0.162 / Starlette 1.10 / uvicorn 0.54 (14 advisories cleared; pip-audit clean).
+- Upgraded Next.js 16.4.3 / React 19.3 / zod 4.6.7 / @hookform/resolvers 6 / Playwright 1.64
+  (npm audit clean).
+- Added security headers on the API and web (nosniff, frame deny, referrer policy,
+  permissions policy; HSTS in production). Disabled X-Powered-By.
+- HF_LOGIN_RATE_LIMIT_PER_MINUTE is configurable (default 5) for automated tests.
+- Migrated dynamic pages to Next 16 async params.
+
+### Added
+- Performance benchmarks for assets/endpoints/research/overview and cold-load frontend
+  measurements (docs/benchmarks.md).
+- Production checklist (docs/production-checklist.md).
+
+### Changed
+- Next config: poweredByHeader: false, optimizePackageImports for lucide-react.
+- E2E can target an existing account via E2E_USER/E2E_PASSWORD.
+
 ## [0.5.0] - 2026-10-29
 
 ### Added

@@ -1,5 +1,7 @@
 "use client";
 
+import { use } from "react";
+
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Download } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -9,11 +11,12 @@ import { PageHeader } from "@/components/domain/shared";
 import { formatTime } from "@/lib/utils";
 import type { Report } from "@/lib/api/types";
 
-export default function ReportDetailPage({ params }: { params: { id: string } }) {
+export default function ReportDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const router = useRouter();
   const { data: report, isLoading } = useQuery({
-    queryKey: ["reports", params.id],
-    queryFn: () => apiFetch<Report>(`/api/v1/reports/${params.id}`),
+    queryKey: ["reports", id],
+    queryFn: () => apiFetch<Report>(`/api/v1/reports/${id}`),
   });
 
   if (isLoading || !report) return <Skeleton className="h-96 w-full" />;

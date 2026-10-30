@@ -1,5 +1,7 @@
 "use client";
 
+import { use } from "react";
+
 import { useRouter } from "next/navigation";
 import { ArrowLeft, FlaskConical } from "lucide-react";
 import { useAsset } from "@/lib/api/hooks";
@@ -7,9 +9,10 @@ import { Badge, Button, Card, CardContent, CardHeader, Skeleton } from "@/compon
 import { MonoValue, PageHeader, ScopeBadge } from "@/components/domain/shared";
 import { formatTime } from "@/lib/utils";
 
-export default function AssetDetailPage({ params }: { params: { id: string } }) {
+export default function AssetDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const router = useRouter();
-  const { data: asset, isLoading } = useAsset(params.id);
+  const { data: asset, isLoading } = useAsset(id);
 
   if (isLoading || !asset) return <Skeleton className="h-40 w-full" />;
 

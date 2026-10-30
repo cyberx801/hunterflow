@@ -215,3 +215,9 @@ class TestDataProtection:
         out = redact_text(text)
         assert "abc123" not in out
         assert "sekrit" not in out
+
+def test_security_headers(client):
+    resp = client.get("/api/v1/healthz")
+    assert resp.headers["X-Content-Type-Options"] == "nosniff"
+    assert resp.headers["X-Frame-Options"] == "DENY"
+    assert resp.headers["Referrer-Policy"] == "no-referrer"

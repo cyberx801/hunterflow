@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, use } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, ChevronDown, ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -10,9 +10,10 @@ import { Badge, Button, Card, CardContent, CardHeader, Skeleton } from "@/compon
 import { PageHeader, StatusBadge } from "@/components/domain/shared";
 import { formatTime } from "@/lib/utils";
 
-export default function JobDetailPage({ params }: { params: { id: string } }) {
+export default function JobDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const router = useRouter();
-  const { data: job, isLoading } = useJob(params.id);
+  const { data: job, isLoading } = useJob(id);
 
   if (isLoading || !job) {
     return <Skeleton className="h-64 w-full" />;

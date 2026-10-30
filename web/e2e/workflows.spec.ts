@@ -59,7 +59,7 @@ test.describe("HunterFlow critical workflows", () => {
     await page.getByRole("button", { name: /start scan/i }).click();
     await expect(page.getByText("dry run").first()).toBeVisible();
 
-    await page.locator("[data-job-id]").first().click();
+    await page.locator("[data-job-id]").filter({ hasText: "dry run" }).first().click();
     await expect(page.getByText(/no tools were executed/i)).toBeVisible();
   });
 
@@ -198,3 +198,4 @@ test.describe("HunterFlow critical workflows", () => {
     expect(["BUTTON", "A", "INPUT", "SELECT"]).toContain(focused);
   });
 });
+

@@ -79,7 +79,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     app = FastAPI(
         title="HunterFlow API",
-        version="0.5.0",
+        version="0.6.0",
         docs_url=None if settings.is_production else "/docs",
         openapi_url=None if settings.is_production else "/openapi.json",
         lifespan=lifespan,
@@ -105,6 +105,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         finally:
             correlation_id_var.reset(token)
         response.headers["X-Correlation-Id"] = cid
+        response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault("Referrer-Policy", "no-referrer")
+        response.headers.setdefault("X-Frame-Options", "DENY")
+        response.headers.setdefault(
+            "Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()"
+        )
+        if settings.is_production:
+            response.headers.setdefault(
+                "Strict-Transport-Security", "max-age=31536000; includeSubDomains"
+            )
         return response
 
     app.include_router(health.router, prefix="/api/v1")

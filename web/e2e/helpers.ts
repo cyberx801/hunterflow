@@ -3,8 +3,8 @@ import { APIRequestContext, Page, expect } from "@playwright/test";
 const BASE = process.env.PLAYWRIGHT_BASE_URL || "http://localhost:3000";
 
 // HunterFlow v0.1.0 is single-user: one shared account for the whole E2E suite.
-export const E2E_USER = "e2e";
-export const E2E_PASSWORD = "e2e-password-123";
+export const E2E_USER = process.env.E2E_USER || "e2e";
+export const E2E_PASSWORD = process.env.E2E_PASSWORD || "e2e-password-123";
 
 export async function ensureUser(request: APIRequestContext): Promise<string> {
   // Register if first-run; otherwise log in as the shared account.
@@ -59,3 +59,4 @@ export async function csrf(request: APIRequestContext): Promise<string> {
   const me = await request.get(`${BASE}/api/v1/auth/me`);
   return (await me.json()).csrf_token;
 }
+
